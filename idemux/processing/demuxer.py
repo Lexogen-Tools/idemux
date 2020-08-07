@@ -77,7 +77,8 @@ def update_fq_read_pairs(mate_pair, mate_with_i1, i1_bc, bc_range, fq_lines_to_m
     return updated_mates
 
 
-def update_fq_body(fq_read, lines_to_mod, )
+def update_fq_body(fq_read, lines_to_mod):
+    pass
 
 def update_fq_header(fq_read, i1_bc):
     # make a list from the tuples, as they are immutable
