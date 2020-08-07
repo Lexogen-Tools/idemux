@@ -8,6 +8,8 @@ from idemux.ioutils.writer import output_file_handler_pe, write_summary
 log = logging.getLogger(__name__)
 
 
+#def get_i7_i5_barcodes(one_read, correction_maps, has_i7, i7_length, i5_length,
+#                       i7_wanted, i5_wanted):
 def get_i7_i5_barcodes(one_read, correction_maps, has_i7):
     # TODO: add documentation
     fastq_header = one_read[0]
@@ -27,6 +29,8 @@ def get_i7_i5_barcodes(one_read, correction_maps, has_i7):
         else:
             i5_bc = barcodes[0]
 
+    #i7_bc_corrected = correction_maps["i7"][12].get(i7_bc)
+    #i5_bc_corrected = correction_maps["i5"][12].get(i5_bc)
     i7_bc_corrected = correction_maps.get("i7").get(len(i7_bc)).get(i7_bc)
     i5_bc_corrected = correction_maps.get("i5").get(len(i5_bc)).get(i5_bc)
     #i5_bc_corrected = correction_maps["i5"].get(i5_bc)
@@ -55,21 +59,16 @@ def process_inline_barcodes(mate_pair, correction_maps, i1_wanted, mate_with_i1=
         return i1_corrected, update_fq_read_pairs(mate_pair,
                                                   mate_with_i1,
                                                   i1_corrected,
-                                                  bc_range,
+                                                  bc_start_pos,
+                                                  bc_end_pos,
                                                   fq_lines_to_shorten)
     else:
-        # log.warning("Invalid inline barcode present.\n"
-        #             "Barcode: %s\n"
-        #             "Read header: %s", i1_bc, mate_pair[mate_with_i1][fq_header_idx])
-        # log.warning("Read will be sorted into undetermined bin.")
-        #
-        # # TODO: Fix return values
         return None, mate_pair
 
 
 def update_fq_read_pairs(mate_pair, mate_with_i1, i1_bc, bc_range, fq_lines_to_mod):
     # if there is an i1 present we need to add it first to the fq header
-    updated_mates = [update_fq_header(mate, i1_bc) for mate in mate_pair]
+    updated_mates = (update_fq_header(mate, i1_bc) for mate in mate_pair)
     # then we cut out the barcode from the read. However, when we do that we need to
     # make sure other lines as the quality scores are shortened as well.
     for idx in fq_lines_to_mod:
@@ -77,6 +76,8 @@ def update_fq_read_pairs(mate_pair, mate_with_i1, i1_bc, bc_range, fq_lines_to_m
                                                                 idx], *bc_range)
     return updated_mates
 
+
+def update_fq_body(fq_read, lines_to_mod, )
 
 def update_fq_header(fq_read, i1_bc):
     # make a list from the tuples, as they are immutable
@@ -148,8 +149,8 @@ def demux_paired_end(args, used_lengths, barcode_sample_map, i7_wanted, i5_wante
                 fq_out1, fq_out2 = file_handler.get(barcodes,
                                                     file_handler["undetermined"])
 
-                fq_out1.writelines(processed_mates[0])
-                fq_out2.writelines(processed_mates[1])
+                fq_out1.write("".join(processed_mates[0]))
+                fq_out2.write("".join(processed_mates[1]))
 
                 # We want some summary statistics in the end to get an idea how many
                 # reads have been sorted into what file/bin. So do some counting for that

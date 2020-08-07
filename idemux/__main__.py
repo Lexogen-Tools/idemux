@@ -1,2 +1,5 @@
 import idemux.idemux as demux
-demux.main()
+import cProfile
+cProfile.run('demux.main()', sort='cumulative')
+
+

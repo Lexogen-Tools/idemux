@@ -56,20 +56,16 @@ def get_cli_parser():
 
 
 def main():
-
     # TODO: demultiplexing can be done either on i7 or i5 check what happens in case i5
     #  is specified, and only 1 barcode is in the header
     # get the command line arguments
     cli_parser = get_cli_parser()
     args = cli_parser.parse_args()
     sample_sheet = args.sample_sheet
-
-    # the sample sheet defines sample barcode relations and how the
-    # reads should be demultiplexed
+    # the sample sheet defines sample barcode relations and how the reads should be
+    # demultiplexed
     barcode_sample_map, wanted_barcodes, used_lengths = parse_sample_sheet(sample_sheet)
-
     i7_wanted, i5_wanted, i1_wanted = wanted_barcodes
-
     # demultiplex and error correct for PE files
     demux_paired_end(args, used_lengths, barcode_sample_map, i7_wanted, i5_wanted,
                      i1_wanted)
