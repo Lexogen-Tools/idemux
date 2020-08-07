@@ -174,7 +174,8 @@ def has_valid_barcode_combinations(i7_barcodes, i5_barcodes, i1_barcodes):
 
     # demultiplexing on i7 and i5 (and maybe i1). I1 is optional when i7 and i5 are
     # already specified
-    if all([all_i7, all_i5]) and no_i1:
+    #if all([all_i7, all_i5]) and no_i1:
+    if all([all_i7, all_i5]):
         return True
     # demultiplexing on i7 and/or i1
     if all([all_i7, no_i5]) and any([all_i1, some_i1]):
@@ -256,7 +257,7 @@ def get_pe_fastq(fq_gz_1, fq_gz_2):
         fastq_2 = fastq_lines_to_reads(fq_2_gz_stream)
         yield zip(fastq_1, fastq_2)
     finally:
-        for fq_file in zip(fq_1_gz_stream, fq_2_gz_stream):
+        for fq_file in [fq_1_gz_stream, fq_2_gz_stream]:
             log.debug('Trying to close file: %s' % fq_file.name)
             try:
                 fq_file.close()
@@ -374,24 +375,26 @@ def peek_into_fastq_files(fq_gz_1, fq_gz_2, has_i7, has_i5):
 
 
 def check_fastq_headers(mate_pair, has_i7, has_i5):
+    # TODO: add documumentation
+    # TODO: add read name checking
     header_idx = 0
     mate1, mate2 = mate_pair
     bcs_mate1 = len(mate1[header_idx].rpartition(":")[-1].split('+'))
     bcs_mate2 = len(mate2[header_idx].rpartition(":")[-1].split('+'))
 
     number_bc_present = [bcs_mate1, bcs_mate2]
-    expected_number = sum(has_i7, has_i5)
+    expected_number = sum([has_i7, has_i5])
 
     example_header_1 = ("@NB502007:379:HM7H2BGXF:1:11101:24585:1069 1:N:0:TCAGGTAANNTT")
     example_header_2 = ("@NB502007:379:HM7H2BGXF:1:11101:24585:1069 "
                         "1:N:0:TCAGGTAANNTT+NANGGNNCNNNN")
 
-    right_number_of_barcodes = [n < expected_number for n in number_bc_present]
+    right_number_of_barcodes = [n <= expected_number for n in number_bc_present]
     if not all(right_number_of_barcodes):
         example_header = example_header_2 if expected_number == 2 else example_header_1
         error_msg = ("The fastq file does not contain sufficient barcode information in "
-                     "the header.\nExpected number of barcodes: %s\n Observed number of "
+                     "the header.\nExpected number of barcodes: %s\nObserved number of "
                      "barcodes: %s\nPlease check your input file. Your fastq header "
-                     "should look similar to this example.\n Example: %s" %
-                     expected_number, number_bc_present, example_header)
+                     "should look similar to this example.\nExample: %s" %
+                     (expected_number, number_bc_present, example_header))
         raise ValueError(error_msg)

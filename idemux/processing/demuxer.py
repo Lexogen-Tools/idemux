@@ -12,8 +12,8 @@ def get_i7_i5_barcodes(one_read, correction_maps, has_i7):
     # TODO: add documentation
     fastq_header = one_read[0]
     barcodes = fastq_header.rpartition(":")[-1].strip().split('+')
-
-    i7_bc, i5_bc = None
+    i7_bc = None
+    i5_bc = None
     if not barcodes:
         return i7_bc, i5_bc
     # when there are 2 barcodes in the fastq header the orientation is i7,i5
@@ -27,13 +27,14 @@ def get_i7_i5_barcodes(one_read, correction_maps, has_i7):
         else:
             i5_bc = barcodes[0]
 
-    i7_bc_corrected = correction_maps["i7"].get(i7_bc)
-    i5_bc_corrected = correction_maps["i5"].get(i5_bc)
+    i7_bc_corrected = correction_maps.get("i7").get(len(i7_bc)).get(i7_bc)
+    i5_bc_corrected = correction_maps.get("i5").get(len(i5_bc)).get(i5_bc)
+    #i5_bc_corrected = correction_maps["i5"].get(i5_bc)
 
     return i7_bc_corrected, i5_bc_corrected
 
 
-def process_inline_barcodes(mate_pair, correction_maps, i1_wanted, mate_with_i1=2):
+def process_inline_barcodes(mate_pair, correction_maps, i1_wanted, mate_with_i1=1):
     # TODO: add documentation
     # mapping fq lines to indices
     fq_header_idx = 0
@@ -49,7 +50,7 @@ def process_inline_barcodes(mate_pair, correction_maps, i1_wanted, mate_with_i1=
 
     mate_seq_with_i1 = mate_pair[mate_with_i1][fq_seq_idx]
     i1_bc = mate_seq_with_i1[bc_start_pos:bc_end_pos]
-    i1_corrected = correction_maps["i1"].get(i1_bc)
+    i1_corrected = correction_maps.get("i1").get(len(i1_bc)).get(i1_bc)
     if i1_corrected in i1_wanted:
         return i1_corrected, update_fq_read_pairs(mate_pair,
                                                   mate_with_i1,
@@ -78,8 +79,12 @@ def update_fq_read_pairs(mate_pair, mate_with_i1, i1_bc, bc_range, fq_lines_to_m
 
 
 def update_fq_header(fq_read, i1_bc):
+    # make a list from the tuples, as they are immutable
+    fq_read = list(fq_read)
+    new_fq_header = fq_read[0][:-1] + "+" + i1_bc + "\n"
+    fq_read[0] = new_fq_header
     # TODO: add documentation
-    return fq_read[0][:-1] + "+" + i1_bc + "\n"
+    return fq_read
 
 
 def remove_substring(s, start, end):
@@ -120,7 +125,7 @@ def demux_paired_end(args, used_lengths, barcode_sample_map, i7_wanted, i5_wante
     # if None is in *_wanted no barcode has been specified
     has_i7 = None not in i7_wanted
     has_i5 = None not in i5_wanted
-
+    # before doing any processing check if the fastq file is okay.
     peek_into_fastq_files(args.r1, args.r2, has_i7, has_i5)
 
     # TODO: ask if i1 can be reverse complement

@@ -20,7 +20,7 @@ def write_summary(counter, output_dir):
         writer = csv.DictWriter(csvfile, delimiter='\t', fieldnames=fieldnames)
         writer.writeheader()
         for file_name, counts in counter.items():
-            writer.writerow({'filename': file_name, 'rescued_reads': counts})
+            writer.writerow({'sample': file_name, 'written_reads': counts})
     log.info("Run complete! Summary statistics saved to %s", output_file)
 
 
@@ -52,10 +52,11 @@ def output_file_handler_pe(barcode_file_map, output_folder):
     try:
         for barcode, sample_name in barcode_file_map.items():
             # construct the output paths
-            mate1_path = out_file_path = os.path.join(output_folder, sample_name,
-                                                      "_R1.fastq.gz")
-            mate2_path = out_file_path = os.path.join(output_folder, sample_name,
-                                                      "_R2.fastq.gz")
+
+            mate1_filename = sample_name + "_R1.fastq.gz"
+            mate2_filename = sample_name + "_R2.fastq.gz"
+            mate1_path = out_file_path = os.path.join(output_folder, mate1_filename)
+            mate2_path = out_file_path = os.path.join(output_folder, mate2_filename)
             mate1_writer = gzip.open(mate1_path, mode='wt', encoding="utf-8",
                                      compresslevel=4)
             log.debug("File handler opened for mate1: %s", mate1_path)
