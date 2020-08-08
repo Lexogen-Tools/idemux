@@ -1,11 +1,11 @@
 import argparse
 import logging
+from idemux import __version__
 from idemux.ioutils.parser import parse_sample_sheet
 from idemux.processing.demuxer import demux_paired_end
 
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger()
-tool_version = "0.1"
 
 
 def get_cli_parser():
@@ -51,7 +51,7 @@ def get_cli_parser():
                                 help='Where to write the output files.'
                                 )
     # TODO: check how to do this properly
-    parser.add_argument('--version', action='version', version='%(prog)s ' + tool_version)
+    parser.add_argument('--version', action='version', version='%(prog)s ' + __version__)
     return parser
 
 

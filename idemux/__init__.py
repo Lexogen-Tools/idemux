@@ -2,4 +2,8 @@
 
 __author__ = """Falko Hofmann"""
 __email__ = 'falko.hofmann@lexogen.com'
-__version__ = '0.1.0'
+
+try:
+    from idemux._version import __version__
+except ImportError:
+    __version__ = "not-installed"

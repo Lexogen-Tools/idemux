@@ -118,7 +118,6 @@ def demux_paired_end(args, used_lengths, barcode_sample_map, i7_wanted, i5_wante
             for mate_pair in tqdm(pe_reads):
                 # here we do the error correction and get obtain the i1 barcode if present
                 barcodes, processed_mates = process_mate_pair(mate_pair,
-                                                              # correction_map,
                                                               i7_wanted,
                                                               i5_wanted,
                                                               i1_wanted,
