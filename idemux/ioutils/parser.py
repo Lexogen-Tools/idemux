@@ -141,9 +141,9 @@ def parse_sample_sheet(cvs_file):
     i1_used = set(i1_barcodes.keys())
 
     used_barcodes = (i7_used, i5_used, i1_used)
-    return barcode_sample_map, used_barcodes, {"i7": i7_lengths,
-                                               "i5": i5_lengths,
-                                               "i1": i1_lengths}
+    return barcode_sample_map, used_barcodes, {"i7": list(i7_lengths),
+                                               "i5": list(i5_lengths),
+                                               "i1": list(i1_lengths)}
 
 
 def has_valid_barcode_combinations(i7_barcodes, i5_barcodes, i1_barcodes):
@@ -348,12 +348,10 @@ def get_valid_barcodes():
     # TODO: add documentation
     barcode_sets = defaultdict(dict)
     all_barcodes = {"i7": [8, 10, 12], "i5": [8, 10, 12], "i1": [12]}
-    #i1_length = [12]
     correction_maps = load_correction_maps(all_barcodes)
     for bc_type, bc_length_map in correction_maps.items():
         for length, correction_map in bc_length_map.items():
             barcode_sets[bc_type][length] = set(correction_map.values())
-    #barcode_sets["i1"][i1_length] = get_i1_barcodes()
     return barcode_sets
 
 
