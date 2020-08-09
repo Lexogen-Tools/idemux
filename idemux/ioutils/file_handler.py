@@ -31,7 +31,7 @@ class FileHandler(ExitStack):
     def _open_gz_file_handles(self, mate1_path, mate2_path):
         out = []
         for mate_path in (mate1_path, mate2_path):
-            gz_out = io.BufferedWriter(gzip.open(mate_path, mode='w', compresslevel=4),
+            gz_out = io.BufferedWriter(gzip.open(mate_path, mode='wb', compresslevel=4),
                                        buffer_size=self.buffer_per_file)
             out.append(gz_out)
             log.debug("File handler opened for mate: %s", mate_path)

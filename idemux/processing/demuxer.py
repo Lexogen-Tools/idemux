@@ -80,7 +80,6 @@ def demux_paired_end(args, used_lengths, barcode_sample_map, i7_wanted, i5_wante
     has_i5 = None not in i5_wanted
     # before doing any processing check if the fastq file is okay.
     peek_into_fastq_files(args.r1, args.r2, has_i7, has_i5)
-    # TODO: ask if i1 can be reverse complement
     read_counter = Counter()
     log.info("Staring demultiplexing")
     # first we need to open the output files the reads should get sorted into
