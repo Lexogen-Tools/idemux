@@ -1,4 +1,5 @@
 import csv
+import difflib
 import gzip
 import logging
 import sys
@@ -174,7 +175,7 @@ def has_valid_barcode_combinations(i7_barcodes, i5_barcodes, i1_barcodes):
 
     # demultiplexing on i7 and i5 (and maybe i1). I1 is optional when i7 and i5 are
     # already specified
-    #if all([all_i7, all_i5]) and no_i1:
+    # if all([all_i7, all_i5]) and no_i1:
     if all([all_i7, all_i5]):
         return True
     # demultiplexing on i7 and/or i1
@@ -357,7 +358,7 @@ def get_valid_barcodes():
 
 def peek_into_fastq_files(fq_gz_1, fq_gz_2, has_i7, has_i5):
     log.info("Peeking into fastq files to check for barcode formatting errors")
-    lines_to_check = 1000
+    lines_to_check = 100
     counter = 0
     try:
         with get_pe_fastq(fq_gz_1, fq_gz_2) as pe_reads:
@@ -374,11 +375,14 @@ def peek_into_fastq_files(fq_gz_1, fq_gz_2, has_i7, has_i5):
 
 def check_fastq_headers(mate_pair, has_i7, has_i5):
     # TODO: add documumentation
-    # TODO: add read name checking
     header_idx = 0
     mate1, mate2 = mate_pair
-    bcs_mate1 = len(mate1[header_idx].rpartition(":")[-1].split('+'))
-    bcs_mate2 = len(mate2[header_idx].rpartition(":")[-1].split('+'))
+
+    header_mate_1 = mate1[header_idx]
+    header_mate_2 = mate2[header_idx]
+
+    bcs_mate1 = len(header_mate_1.rpartition(":")[-1].split('+'))
+    bcs_mate2 = len(header_mate_2.rpartition(":")[-1].split('+'))
 
     number_bc_present = [bcs_mate1, bcs_mate2]
     expected_number = sum([has_i7, has_i5])
@@ -393,6 +397,9 @@ def check_fastq_headers(mate_pair, has_i7, has_i5):
         error_msg = ("The fastq file does not contain sufficient barcode information in "
                      "the header.\nExpected number of barcodes: %s\nObserved number of "
                      "barcodes: %s\nPlease check your input file. Your fastq header "
-                     "should look similar to this example.\nExample: %s" %
-                     (expected_number, number_bc_present, example_header))
+                     "should look similar to this example.\nExample: %s\n Observed "
+                     "headers: %s" %
+                     (expected_number, number_bc_present, example_header,
+                      [header_mate_1, header_mate_2])
+                     )
         raise ValueError(error_msg)
