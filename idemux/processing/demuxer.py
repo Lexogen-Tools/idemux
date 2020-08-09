@@ -11,31 +11,6 @@ from idemux.ioutils.writer import write_summary
 log = logging.getLogger(__name__)
 
 
-def get_i7_i5_barcodes(mate_pair, correction_maps, has_i7):
-    # TODO: add documentation
-    # get fastq header of the first mate pair
-    fastq_header = mate_pair[0][0]
-    barcodes = fastq_header.rpartition(":")[-1].strip().split('+')
-    i7_bc = None
-    i5_bc = None
-    if not barcodes:
-        return i7_bc, i5_bc
-    # when there are 2 barcodes in the fastq header the orientation is i7,i5
-    if len(barcodes) == 2:
-        i7_bc = barcodes[0]
-        i5_bc = barcodes[1]
-    # when there is only 1 barcode present we need to know if its i5 or i7
-    elif len(barcodes) == 1:
-        if has_i7:
-            i7_bc = barcodes[0]
-        else:
-            i5_bc = barcodes[0]
-    i7_bc_corrected = correction_maps.get("i7").get(len(i7_bc)).get(i7_bc)
-    i5_bc_corrected = correction_maps.get("i5").get(len(i5_bc)).get(i5_bc)
-
-    return i7_bc_corrected, i5_bc_corrected
-
-
 def process_mate_pair(mate_pair, i7_wanted, i5_wanted, i1_wanted,
                       has_i7,
                       map_i7, map_i5, map_i1):
@@ -130,6 +105,6 @@ def demux_paired_end(args, used_lengths, barcode_sample_map, i7_wanted, i5_wante
                 # barcodes.
                 fq_out1, fq_out2 = file_handler.get(barcodes,
                                                     file_handler["undetermined"])
-                fq_out1.write(processed_mates[0])
-                fq_out2.write(processed_mates[1])
+                fq_out1.write(processed_mates[0].encode())
+                fq_out2.write(processed_mates[1].encode())
     write_summary(read_counter, args.output_dir)
