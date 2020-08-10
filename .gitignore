@@ -105,3 +105,6 @@ ENV/
 .vscode/
 # Version file
 idemux/_version.py
+
+# Docs build
+docs/__build
