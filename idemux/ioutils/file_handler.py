@@ -13,7 +13,7 @@ class FileHandler(ExitStack):
     def __init__(self, barcode_file_map, output_folder, memory=2 ** 30):
         self.barcode_file_map = barcode_file_map
         self.output_folder = pathlib.Path(output_folder)
-        self.buffer_per_file = memory // (len(barcode_file_map) * 2)
+        self.buffer_per_file = int(memory // (len(barcode_file_map) * 2))
 
         super().__init__()
         self.fastq_handler = defaultdict(list)
