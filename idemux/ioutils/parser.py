@@ -374,9 +374,9 @@ def is_valid_barcode(barcode, valid_barcodes, barcode_type, sample_name):
     """Checks if the barcode associated with sample is a valid Lexogen barcode.
 
     Args:
-        barcode (byte): A barcode represented as byte string
+        barcode (str): A barcode string
         valid_barcodes (dict): A nested dict mapping barcode names to length, to valid
-            barcodes as byte strings. E.g "i7" : 12 : set(bytes)
+            barcodes E.g "i7" : 12 : set(str)
         barcode_type (str): Name of the barcode type, e.g "i7"
         sample_name (str): Sample name corresponding to "barcode"
 
@@ -392,7 +392,7 @@ def is_valid_barcode(barcode, valid_barcodes, barcode_type, sample_name):
 
 @contextmanager
 def get_pe_fastq(fq_gz_1, fq_gz_2):
-    """Generator that opens two paired fastq.gz files and reads them as byte strings.
+    """Generator that opens two paired fastq.gz files and yields them as utf-8 strings.
 
     Args:
         fq_gz_1: Path to read1 of the mate pair.
