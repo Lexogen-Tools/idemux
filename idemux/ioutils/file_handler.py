@@ -1,5 +1,6 @@
 import gzip
 import logging
+import os
 import pathlib
 from collections import defaultdict
 from contextlib import ExitStack
@@ -13,8 +14,9 @@ class FileHandler(ExitStack):
     def __init__(self, barcode_file_map, output_folder, memory=2 ** 30):
         self.barcode_file_map = barcode_file_map
         self.output_folder = pathlib.Path(output_folder)
+        if not os.path.exists(output_folder):
+            os.makedirs(output_folder)
         self.buffer_per_file = int(memory // (len(barcode_file_map) * 2))
-
         super().__init__()
         self.fastq_handler = defaultdict(list)
         self.barcode_file_map["undetermined"] = "undetermined"
