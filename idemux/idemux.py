@@ -17,21 +17,21 @@ def get_cli_parser():
         argparse.ArgumentTypeError
     """
     # TODO: update descriptions
-    parser = argparse.ArgumentParser(prog='error_correction.py',
+    parser = argparse.ArgumentParser(prog='idemux',
                                      description='A tool to demultiplex fastq '
                                                  'files based on Lexogen i7,i5,'
                                                  'i1  barcodes.')
     required_args = parser.add_argument_group('required arguments')
     required_args.add_argument('--r1',
                                type=str,
-                               dest='r1',
+                               dest='read1',
                                required=True,
                                help='Path to the read 1 fastq file that should be '
                                     'demultiplexed'
                                )
     required_args.add_argument('--r2',
                                type=str,
-                               dest='r2',
+                               dest='read2',
                                required=True,
                                help='Path to the read 2 fastq file that should be '
                                     'demultiplexed'
@@ -40,35 +40,40 @@ def get_cli_parser():
     required_args.add_argument('--sample-sheet',
                                type=str,
                                dest='sample_sheet',
-                               required=True,
                                help='Csv file containing sample names, i7, i5 and i1 '
                                     'barcodes'
                                )
     required_args.add_argument('--out',
-                                type=str,
-                                dest='output_dir',
-                                required=True,
-                                help='Where to write the output files.'
-                                )
-    # TODO: check how to do this properly
+                               type=str,
+                               dest='output_dir',
+                               required=True,
+                               help='Where to write the output files.'
+                               )
+    parser.add_argument('--i5-rc',
+                        dest='i5_rc',
+                        action='store_true',
+                        default=False,
+                        help='Set this flag if the i5 barcode has been sequenced as '
+                             'reverse complement and the barcodes you provided should '
+                             'be reverse complemented.')
+    parser.add_argument('--i1-start',
+                        type=int,
+                        default=10,
+                        dest='i1_start',
+                        help='Start position of the i1 index (0-based) on read 2.')
     parser.add_argument('--version', action='version', version='%(prog)s ' + __version__)
     return parser
 
 
 def main():
-    # TODO: demultiplexing can be done either on i7 or i5 check what happens in case i5
-    #  is specified, and only 1 barcode is in the header
     # get the command line arguments
     cli_parser = get_cli_parser()
-    args = cli_parser.parse_args()
-    sample_sheet = args.sample_sheet
+    args = vars(cli_parser.parse_args())
     # the sample sheet defines sample barcode relations and how the reads should be
     # demultiplexed
-    barcode_sample_map, wanted_barcodes, used_lengths = parse_sample_sheet(sample_sheet)
-    i7_wanted, i5_wanted, i1_wanted = wanted_barcodes
+    barcode_sample_map, barcodes = parse_sample_sheet(**args)
     # demultiplex and error correct for PE files
-    demux_paired_end(args, used_lengths, barcode_sample_map, i7_wanted, i5_wanted,
-                     i1_wanted)
+    demux_paired_end(barcode_sample_map, barcodes, **args)
 
 
 if __name__ == "__main__":

@@ -1,6 +1,5 @@
 import csv
 import gzip
-import io
 import logging
 import sys
 from collections import defaultdict, Counter
@@ -8,6 +7,8 @@ from contextlib import contextmanager
 from itertools import zip_longest
 
 # importlib is > 3.7 Try to import it and if this does not work import the backport
+from idemux.ioutils.barcode import Barcode
+
 try:
     from importlib import resources
 except ImportError:
@@ -16,7 +17,7 @@ except ImportError:
 log = logging.getLogger(__name__)
 
 
-def parse_sample_sheet(cvs_file):
+def parse_sample_sheet(sample_sheet, i5_rc, **kwargs):
     """Function to parse the sample_sheet.csv.
 
     This function takes the path to a idemux sample sheet reads the data and does some
@@ -83,7 +84,7 @@ def parse_sample_sheet(cvs_file):
         sample_1,AAAATCCCAG,CCCCTAAACGTT,AAAATCCC
 
     Arguments:
-        cvs_file (str): Path to a sample_sheet.cvs. See examples for formatting
+        sample_sheet (str): Path to a sample_sheet.cvs. See examples for formatting
 
     Returns:
         barcode_sample_map (dict): A dict mapping a tuple of barcodes to sample names
@@ -96,8 +97,6 @@ def parse_sample_sheet(cvs_file):
     Except:
         ValueError: Will initiate sys.exit(1)
     """
-    # i1 inline barcode is always 12 nt in length
-    expected_i1_bc_length = 12
     # we use these to keep track which lengths are beeing used for each barcode
     i7_lengths, i5_lengths, i1_lengths = set(), set(), set()
 
@@ -109,57 +108,50 @@ def parse_sample_sheet(cvs_file):
     # this is for keeping track which unique barcode combination is associated with a
     # sample
     barcode_sample_map = dict()
-    # we read all valid Lexogen barcodes here, so we can check if the provided barcodes
-    # are valid barcodes. We need to do this as we can only error correct and
-    # demultiplex on Lexogen barcodes.
-    valid_barcodes = get_valid_barcodes()
     # we use this for checking for duplicated sample names
     sample_count = Counter()
     # expected file header
     sample_sheet_header = ["sample_name", "i7", "i5", "i1"]
     try:
-        with open(cvs_file) as sample_sheet:
+        with open(sample_sheet) as sample_sheet:
             # we register a csv dialect to do whitespace trimming for us
             csv.register_dialect('strip', skipinitialspace=True)
             lines_read = 0
-            reader = csv.DictReader(sample_sheet, dialect='strip')
+            reader = csv.DictReader(sample_sheet, restval=None, dialect='strip')
+
             for row in reader:
                 lines_read += 1
                 # check if all the needed columns are present. otherwise we want to
                 # disallow further processing
-                if not set(sample_sheet_header) <= row.keys():
+                if not set(sample_sheet_header) == row.keys():
                     s1 = ",".join(sample_sheet_header)
                     s2 = ",".join(row.keys())
                     error_msg = ("Incorrect sample sheet header. Expected header: %s\n"
                                  "Observed header: %s" % (s1, s2))
                     raise ValueError(error_msg)
 
-                # use get so if there are empty values None is returned
                 sample_name = row.get('sample_name')
-                i7_bc = row.get('i7')
-                i5_bc = row.get('i5')
-                i1_bc = row.get('i1')
-
                 # undefined sample names are not allowed
-                if sample_name is None:
+                if not sample_name:
                     error_msg = ("Incorrect sample name in line %s. Empty values are "
                                  "not allowed as sample names." % lines_read)
                     raise ValueError(error_msg)
+                # we use this to keep track of duplicate sample names
                 sample_count[sample_name] += 1
 
-                # make sure the barcodes are actual Lexogen barcodes so we can error
-                # correct them later on
-                is_valid_barcode(i7_bc, valid_barcodes, "i7", sample_name)
-                is_valid_barcode(i5_bc, valid_barcodes, "i5", sample_name)
-                is_valid_barcode(i1_bc, valid_barcodes, "i1", sample_name)
-
+                _i7 = row.get('i7')
+                i7_bc = _i7 if _i7 else None
+                # i5 can be sequenced as reverse complement, translate if needed
+                _i5 = row.get('i5') if not i5_rc else reverse_complement(row.get('i5'))
+                i5_bc = _i5 if _i5 else None
+                _i1 = row.get('i1')
+                i1_bc = _i1 if _i1 else None
                 # add barcodes and sample_names to dict so we can do some value checking
                 # later as not all combinations should be allowed
                 i7_barcodes[i7_bc].append(sample_name)
                 i5_barcodes[i5_bc].append(sample_name)
                 i1_barcodes[i1_bc].append(sample_name)
                 barcodes = (i7_bc, i5_bc, i1_bc)
-
                 # barcode combinations have to be unique. otherwise we don't know to which
                 # sample they belong
                 if barcodes in barcode_sample_map:
@@ -170,38 +162,21 @@ def parse_sample_sheet(cvs_file):
                                                                             barcodes,
                                                                             same_barcode))
                     raise ValueError(error_msg)
-
                 barcode_sample_map[barcodes] = sample_name
                 # barcodes of different length are a problem as 8, 10, 12 nucleotide
                 # barcodes are a subset of each other. Therefore we only allow one
                 # length per barcode type
-                i7_lengths.add(len(i7_bc))  # i7 is always required and cannot be none
+                i7_lengths.add(i7_bc if i7_bc is None else len(i7_bc))
+                i5_lengths.add(i5_bc if i5_bc is None else len(i5_bc))
+                i1_lengths.add(i1_bc if i1_bc is None else len(i1_bc))
 
-                if i5_bc is not None:
-                    i5_lengths.add(len(i5_bc))
-                if i1_bc is not None:
-                    i1_lengths.add(len(i1_bc))
-        # barcodes for each type need to be of the same length. This is as the
-        # sequences of 8 nt long barcodes are contained within 10 nt long barcodes,
-        # and the ones of 10 in 12. if we dont enforce the same length per barcode there
-        # might be a possibility we cant tell with certainty to which sample a
-        # barcoded read belongs.
-        barcode_lengths = {"i7": list(i7_lengths),
-                           "i5": list(i5_lengths),
-                           "i1": list(i1_lengths)}
-        has_different_lengths(barcode_lengths)
-        # if me made it here we can be sure he list contains only one barcode
-        observed_i1_length = list(i1_lengths)[0]
-        if observed_i1_length != expected_i1_bc_length:
-            error_msg = ("i1 inline barcodes should be %s nt long. The i1 indices you "
-                         "specified are only %s nt long." % (expected_i1_bc_length,
-                                                             observed_i1_length)
-                         )
-            raise ValueError(error_msg)
+        i7 = Barcode('i7', i7_barcodes)
+        i5 = Barcode('i5', i5_barcodes, i5_rc)
+        i1 = Barcode('i1', i1_barcodes)
+        barcodes = (i7, i5, i1)
 
         # test if the supplied barcode combinations are valid
-        has_valid_barcode_combinations(i7_barcodes, i5_barcodes, i1_barcodes)
-
+        has_valid_barcode_combinations(*barcodes)
         # sample names have to be unique as they determine the outfile name. Otherwise
         # we get problems when we try to write reads belonging to different barcode
         # combinations to one file.
@@ -213,21 +188,54 @@ def parse_sample_sheet(cvs_file):
             raise ValueError(error_msg)
 
     except ValueError as e:
-        log.exception(str(e))
-        sys.exit(1)
+        sys.exit(e)
     # we have made it until here until raising an exception. That means the sample sheet
     # information should be okay and we can return required data from the sample sheet.
-    i7_used = set(i7_barcodes.keys())
-    i5_used = set(i5_barcodes.keys())
-    i1_used = set(i1_barcodes.keys())
-
-    used_barcodes = (i7_used, i5_used, i1_used)
-    return barcode_sample_map, used_barcodes, {"i7": list(i7_lengths),
-                                               "i5": list(i5_lengths),
-                                               "i1": list(i1_lengths)}
+    barcodes = [load_correction_map(bc) for bc in barcodes]
+    return barcode_sample_map, barcodes
 
 
-def has_valid_barcode_combinations(i7_barcodes, i5_barcodes, i1_barcodes):
+def reverse_complement(sequence):
+    """Function that returns the reverse complement of DNA sequence. Accepts A,C,T,G,N
+    as input bases.
+
+    Args:
+        sequence (str): A DNA string that should be translated to its reverse complement
+
+    Returns:
+        str: Reverse complement of the input. Returns None when
+            sequence is None
+
+    Raises:
+        ValueError: Is raised when the input string contains other letters than A,C,T,G,N
+    """
+    # if sequence is None, no need to do any work
+    if sequence is None:
+        return None
+
+    # complements of each base
+    base_complements = {'A': 'T',
+                        'C': 'G',
+                        'G': 'C',
+                        'T': 'A',
+                        'N': 'N'}
+    try:
+        # get the reverse complement
+        rc_sequence = [base_complements[nt] for nt in sequence[::-1]]
+        return "".join(rc_sequence)
+    except KeyError:
+        # we only get a key error if sequence contains letter that are not covered
+        # above
+        invalid_bases = [nt for nt in sequence[::-1] if nt not in base_complements]
+
+        error_message = ("The following barcode sequence from the sample sheet "
+                         "contains bases that cant be mapped to their reverse "
+                         "complement.\nBarcodes: %s\nBases %s" %
+                         (sequence, invalid_bases))
+        raise ValueError(error_message)
+
+
+def has_valid_barcode_combinations(i7, i5, i1, *args):
     """Function that checks if the provided barcodes allow unique sample identification
     for the different usecases.
 
@@ -243,9 +251,9 @@ def has_valid_barcode_combinations(i7_barcodes, i5_barcodes, i1_barcodes):
     - no i7 no i5, no i1
 
     Args:
-        i7_barcodes (iterable): i7 barcodes of all samples
-        i5_barcodes (iterable): i5 barcodes of all samples
-        i1_barcodes (iterable): i1 barcodes of all samples
+        i7 (Barcode): Barcode dataclass of i7 barcodes
+        i5 (Barcode): Barcode dataclass of i5 barcodes
+        i1 (Barcode): Barcode dataclass of i1 barcodes
 
     Returns:
         is_valid (bool): True when valid barcode combinations are supplied (see above)
@@ -253,141 +261,47 @@ def has_valid_barcode_combinations(i7_barcodes, i5_barcodes, i1_barcodes):
     Raises:
         ValueError (err): When supplied an invalid barcode combination (see above)
     """
-
-    # missing values in the csv retruned as None so we want to check fo these
-    all_i7 = None not in i7_barcodes
-    all_i5 = None not in i5_barcodes
-    all_i1 = None not in i1_barcodes
-
-    samples_no_i7, some_i7 = some_dont_have_barcode(i7_barcodes)
-    samples_no_i5, some_i5 = some_dont_have_barcode(i5_barcodes)
-    samples_no_i1, some_i1 = some_dont_have_barcode(i1_barcodes)
-
-    no_i7 = none_have_barcode(i7_barcodes)
-    no_i5 = none_have_barcode(i5_barcodes)
-    no_i1 = none_have_barcode(i1_barcodes)
-
     # allowed cases, we dont actually need these return values, but these make the logic
     # much more obvious and human readable.
     # demultiplexing on i7 and i5 (and maybe i1). I1 is optional when i7 and i5 are
-    # already specified
-    if all([all_i7, all_i5]):
+    # already specified so we dont really need to check for sparsity
+    if i7.full and i5.full:
         return True
     # demultiplexing on i7 and/or i1
-    if all([all_i7, no_i5]) and any([all_i1, some_i1]):
+    if i7.full and i5.empty:
         return True
     # demultiplexing on i5 and/or i1
-    if all([no_i7, all_i5]) and any([all_i1, some_i1]):
+    if i7.empty and i5.full:
         return True
     # demultiplexing on i1 only
-    if all([no_i7, no_i5]) and all_i1:
+    if i7.empty and i5.empty and i1.full:
         return True
 
     error_messages = []
     # the following things are not allowed because they eventually dont allow assigning
     # reads unambiguously to samples
-    if some_i7:
+    if i7.sparse:
         error_msg = ("Not all samples have an i7 barcode defined. An i7 barcode needs "
                      "to be either specified for all or none of the samples. Samples "
-                     "without a barcode: %s" % samples_no_i7)
+                     "without a barcode: %s" % i7.samples_without_barcodes)
         error_messages.append(error_msg)
-    if some_i5:
+    if i5.sparse:
         error_msg = ("Not all samples have an i5 barcode defined. An i5 barcode needs "
                      "to be either specified for all or none of the samples. Samples "
-                     "without a barcode: %s" % samples_no_i5)
+                     "without a barcode: %s" % i5.samples_without_barcodes)
         error_messages.append(error_msg)
-    if some_i1:
+    if i1.sparse:
         error_msg = ("Not all samples have an i7 barcode defined. An i7 barcode needs "
                      "to be either specified for all or none of the samples. Samples "
-                     "without a barcode: %s" % samples_no_i1)
+                     "without a barcode: %s" % i1.samples_without_barcodes)
         error_messages.append(error_msg)
     # an empty sample sheet does nothing and is therefore disallowed
-    if all([no_i7, no_i5, no_i1]):
+    if all([i7.empty, i5.empty, i1.empty]):
         error_msg = ("No index sequences have been specified in the sample sheet. "
                      "Please specify some barcodes to run this tool.")
         error_messages.append(error_msg)
     # if we did not return true earlier it is error raising time!
     raise ValueError("\n".join(error_messages))
-
-
-def none_have_barcode(barcoded_samples):
-    """Just a short alias function to check if another value than None is a <barcode:
-    sample> map.
-
-     Args:
-         barcoded_samples (dict): A dict mapping one type of barcodes (e.g. i7) to a
-             sample name
-
-    Returns:
-        only_none (bool): Is there another value next to None?
-    """
-    return None in barcoded_samples and len(barcoded_samples) == 1
-
-
-def all_have_barcode(barcoded_samples):
-    """Just a short alias to function to check if None values are present in a <barcode:
-    sample> map.
-
-     Args:
-         barcoded_samples (dict): A dict mapping one type of barcode (e.g. i7) to a
-             sample name
-
-    Returns:
-        bool: Is there no None present?
-    """
-    return None not in barcoded_samples
-
-
-def some_dont_have_barcode(barcoded_samples):
-    """Just a short alias to function to check if None values are present in a <barcode:
-    sample> map and to return the sample names with None values.
-
-     Args:
-         barcoded_samples (dict): A dict mapping one type of barcode (e.g. i7) to a
-             sample name
-
-    Returns:
-        bool: Is there a None in barcoded_samples?
-    """
-    return barcoded_samples.get(None), None in barcoded_samples
-
-
-def has_different_lengths(barcode_lengths):
-    """Checks if a barcode name maps to a list with more than one element.
-
-     Args:
-         barcode_lengths (dict): A dict mapping a barcode name to a list of seen
-             barcode lengths e.g. {"i5",[8,12]}.
-
-    Raises:
-        ValueError: When the list contains more than one item.
-    """
-    for name, lengths in barcode_lengths.items():
-        if len(lengths) > 1:
-            error_msg = ("%s barcodes with different length have been specified. Only "
-                         "one length is allowed.\n Observed Lengths: %s" % name,
-                         lengths)
-            raise ValueError(error_msg)
-
-
-def is_valid_barcode(barcode, valid_barcodes, barcode_type, sample_name):
-    """Checks if the barcode associated with sample is a valid Lexogen barcode.
-
-    Args:
-        barcode (str): A barcode string
-        valid_barcodes (dict): A nested dict mapping barcode names to length, to valid
-            barcodes E.g "i7" : 12 : set(str)
-        barcode_type (str): Name of the barcode type, e.g "i7"
-        sample_name (str): Sample name corresponding to "barcode"
-
-    Raises:
-        ValueError: When the barcode is not in valid barcodes
-    """
-    barcode_set = valid_barcodes[barcode_type].get(len(barcode))
-    if barcode not in barcode_set and not None:
-        error_msg = ("Barcode %s for sample %s is no valid %s barcode.\n Please check "
-                     "your sample sheet." % (barcode, sample_name, barcode_type))
-        raise ValueError(error_msg)
 
 
 @contextmanager
@@ -436,7 +350,17 @@ def fastq_lines_to_reads(fastq_lines):
     return zip_longest(*chunked_lines)
 
 
-def load_correction_map(barcode_type, barcode_length):
+def get_map_from_resource(package, resource):
+    log.debug("Loading error correction map from %s", resource)
+    mapping = dict()
+    with resources.open_text(package, resource) as tsv_file:
+        reader = csv.reader(tsv_file, delimiter='\t')
+        for row in reader:
+            mapping[row[0]] = row[1]
+    return mapping
+
+
+def load_correction_map(barcode):
     """Reads a tsv barcodes file, converts them to byes and returns them as a dict.
     These dicts are used to map erroneous barcodes to their corrected version.
     Args:
@@ -446,53 +370,38 @@ def load_correction_map(barcode_type, barcode_length):
     Return:
         dict (dict): correction_map : <b'erroneous_barcode', b'corrected_barcode'>
     """
-    mapping = dict()
-    package = "idemux.resources.barcodes.%s" % barcode_type
-    mapping_file = "correction_map_b96_l%s.tsv" % barcode_length
-    log.debug("Loading error correction map from %s", mapping_file)
-    with resources.open_text(package, mapping_file) as tsv_file:
-        # with open(mapping_file, "r") as tsv_file:
-        reader = csv.reader(tsv_file, delimiter='\t')
-        for row in reader:
-            mapping[row[0]] = row[1]
-    return mapping
+    log.info(f"Trying to find the appropriate barcode set for {barcode.name}...")
+    # When there are no barcodes specified, there is nothing to correct.
+    if barcode.length is None:
+        log.info(f"No barcodes have been specified for {barcode.name}.")
+        barcode.correction_map = {None: None}
+        return barcode
+
+    for set_size in barcode.get_set_sizes():
+        package_str = f"idemux.resources.barcodes.{barcode.name}"
+        file_str = f"base_mapping_b{set_size}_l{barcode.length}.tsv"
+
+        corr_map = get_map_from_resource(package_str, file_str)
+        _barcode_set = set(corr_map.values())
+        _barcodes_given = barcode.get_used_codes(drop_none=True)
+        if _barcodes_given <= _barcode_set:
+            log.info(f"Correct set found. Used set is {set_size} barcodes with "
+                     f"{barcode.length} nt length.")
+            barcode.correction_map = corr_map
+            return barcode
+
+    if barcode.length != 6:
+        log.warning(f"No fitting Lexogen barcode set found for {barcode.name}. No "
+                    f"error correction will take place for this barcode. Are you using "
+                    f"valid Lexogen barodes?")
+
+    _bc_list = list(barcode.used_codes)
+    barcode.correction_map = dict(zip(_bc_list, _bc_list))
+    return barcode
 
 
-def load_correction_maps(barcodes):
-    """Reads i7 and i5 correction maps of the specified types.
-
-       Args:
-           barcodes (dict): An dictionary mapping the barcode to an iterable of
-           lengths. Eg. {"i7" : [8,10,12],"i5" : [8]}
-       Return:
-           dict (dict): correction_map : A nested dict containing the
-           correction maps. Format: <barcode_type: length : correction_map>
-    """
-    barcode_maps = defaultdict(dict)
-    for barcode_type, lengths in barcodes.items():
-        for length in lengths:
-            correction_map = load_correction_map(barcode_type, length)
-            barcode_maps[barcode_type][length] = correction_map
-    return barcode_maps
-
-
-def get_valid_barcodes():
-    """Loads all valid Lexogen barcodes.
-
-       Return:
-           dict (dict): A nested dict mapping barcode name to, length, to a set of
-               valid barcodes. Format: <barcode_type: length : lexogen barcodes>
-    """
-    barcode_sets = defaultdict(dict)
-    all_barcodes = {"i7": [8, 10, 12], "i5": [8, 10, 12], "i1": [12]}
-    correction_maps = load_correction_maps(all_barcodes)
-    for bc_type, bc_length_map in correction_maps.items():
-        for length, correction_map in bc_length_map.items():
-            barcode_sets[bc_type][length] = set(correction_map.values())
-    return barcode_sets
-
-
-def peek_into_fastq_files(fq_gz_1, fq_gz_2, has_i7, has_i5):
+def peek_into_fastq_files(fq_gz_1, fq_gz_2, has_i7, has_i5, has_i1, i7_length,
+                          i5_length, i1_start, i1_end, **args):
     """Reads the first 100 lines of paired fastq.gz files and checks if everything is
     okay with the fastq header format.
 
@@ -507,22 +416,43 @@ def peek_into_fastq_files(fq_gz_1, fq_gz_2, has_i7, has_i5):
             booleans.
     """
     log.info("Peeking into fastq files to check for barcode formatting errors")
-    lines_to_check = 100
+    lines_to_check = 1000
     counter = 0
+    log.info("Checking fastq input files...")
+
+    with get_pe_fastq(fq_gz_1, fq_gz_2) as pe_reads:
+        for mate_pair in pe_reads:
+            check_mate_pair(mate_pair, has_i7, has_i5, has_i1, i7_length, i5_length,
+                            i1_start, i1_end)
+            counter += 1
+            if counter == lines_to_check:
+                break
+    log.info("Input file formatting seems fine.")
+
+
+def check_mate_pair(mate_pair, has_i7, has_i5, has_i1, i7_length, i5_length,
+                    i1_start, i1_end):
+    _, mate2 = mate_pair
     try:
-        with get_pe_fastq(fq_gz_1, fq_gz_2) as pe_reads:
-            for mate_pair in pe_reads:
-                check_fastq_headers(mate_pair, has_i7, has_i5)
-                counter += 1
-                if counter == lines_to_check:
-                    break
-        log.info("Fastq file formatting seems fine.")
+        check_fastq_headers(mate_pair, has_i7, has_i5, i7_length, i5_length)
+        if has_i1:
+            check_mate2_length(mate2, i1_start, i1_end)
     except Exception as e:
-        log.exception(e)
-        sys.exit(1)
+        log.info(e)
+        sys.exit(e)
 
 
-def check_fastq_headers(mate_pair, has_i7, has_i5):
+def check_mate2_length(mate2, i1_start, i1_end):
+    seq_idx = 1
+    seq = mate2[seq_idx]
+    if len(seq) < i1_end:
+        raise ValueError(f"Mate 2 is too short for the provided i1 barcode settings. "
+                         f"According to your settings i1 starts at position {i1_start} "
+                         f"and has a length of {i1_start - i1_start}. The sequence of "
+                         f"mate 2 is however only {len(seq)} nt long.")
+
+
+def check_fastq_headers(mate_pair, has_i7, has_i5, i7_length, i5_length):
     """Function to check if the barcodes (i7,i5) specified in the sample sheet are
     as well in the fastq header.
 
@@ -536,13 +466,24 @@ def check_fastq_headers(mate_pair, has_i7, has_i5):
             booleans.
     """
     header_idx = 0
-    mate1, mate2 = mate_pair
-    header_mate_1, header_mate_2 = mate1[header_idx], mate2[header_idx]
+    m_1, m_2 = mate_pair
+    header_mate_1, header_mate_2 = m_1[header_idx], m_2[header_idx]
     # get the barcodes from the fastq header
-    bcs_mate1 = len(header_mate_1.rpartition(":")[-1].split("+"))
-    bcs_mate2 = len(header_mate_2.rpartition(":")[-1].split("+"))
+    bcs_mate1 = header_mate_1.strip().rpartition(":")[-1].split("+")
+    bcs_mate2 = header_mate_2.strip().rpartition(":")[-1].split("+")
 
-    number_bc_present = [bcs_mate1, bcs_mate2]
+    if bcs_mate1 != bcs_mate2:
+        error_msg = (f"Mate1 and mate2 contain different barcode information. Please "
+                     f"make sure the reads in your fastq files are paired.\n"
+                     f"Mate1 header: {header_mate_1}\n"
+                     f"Mate2 header: {header_mate_2}")
+        raise ValueError(error_msg)
+
+
+    number_bc_m1 = len(bcs_mate1)
+    number_bc_m2 = len(bcs_mate2)
+
+    number_bc_present = [number_bc_m1, number_bc_m2]
     expected_number = sum([has_i7, has_i5])
     # this is how a fastq header should look like
     example_header_1 = ("@NB502007:379:HM7H2BGXF:1:11101:24585:1069 1:N:0:TCAGGTAANNTT")
@@ -553,12 +494,33 @@ def check_fastq_headers(mate_pair, has_i7, has_i5):
     right_number_of_barcodes = [n <= expected_number for n in number_bc_present]
     if not all(right_number_of_barcodes):
         example_header = example_header_2 if expected_number == 2 else example_header_1
-        error_msg = ("The fastq file does not contain sufficient barcode information in "
-                     "the header.\nExpected number of barcodes: %s\nObserved number of "
-                     "barcodes: %s\nPlease check your input file. Your fastq header "
-                     "should look similar to this example.\nExample: %s\n Observed "
-                     "headers: %s" %
-                     (expected_number, number_bc_present, example_header,
-                      [header_mate_1, header_mate_2])
-                     )
+        error_msg = (f"The fastq file does not contain sufficient barcode information "
+                     f"in the header.\nExpected number of barcodes: {expected_number}\n"
+                     f"Observed number of barcodes: {number_bc_present}\n"
+                     f"Please check your input file. Your fastq header should look "
+                     f"similar to this example.\n"
+                     f"Example: {example_header}\n"
+                     f"Observed headers: {[header_mate_1, header_mate_2]}")
         raise ValueError(error_msg)
+
+
+    # when there are 2 barcodes in the fastq header the orientation is i7,i5
+    if has_i7 and has_i5:
+        if len(bcs_mate1[0]) != i7_length or len(bcs_mate1[1]) != i5_length:
+            raise ValueError(f"i7 and i5 have a different length than specified in the "
+                             f"sample_sheet. "
+                             f"Observed length(i7,i5): {len(bcs_mate1[0])}"
+                             f",{len(bcs_mate1[1])}\n "
+                             f"Expected length(i7,i5): {i7_length},{i5_length}")
+    if has_i7 and not has_i5:
+        if len(bcs_mate1[0]) != i7_length:
+            raise ValueError(f"i7 has a different length than specified in the "
+                             f"sample_sheet. "
+                             f"Observed length(i7): {len(bcs_mate1[0])}\n"
+                             f"Expected length(i7): {i7_length}\n")
+    if not has_i7 and has_i5:
+        if len(bcs_mate1[0]) != i5_length:
+            raise ValueError(f"i5 has a different length than specified in the "
+                             f"sample_sheet. "
+                             f"Observed length(i5): {len(bcs_mate1[0])}\n"
+                             f"Expected length(i5): {i5_length}\n")
