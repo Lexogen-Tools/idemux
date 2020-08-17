@@ -21,45 +21,49 @@ def process_mate_pair(mate_pair, i7, i5, i1, i1_start, i1_end):
     fastq_header = mate_pair[0][0]
     _, _, _barcodes = fastq_header.rpartition(":")
     barcodes = _barcodes[:-1].split("+")
-    # if not barcodes:
     i7_bc = i5_bc = None
 
     # when there are 2 barcodes in the fastq header the orientation is i7,i5
-    if len(barcodes) == 2:
+    if i7.not_empty and i5.not_empty:
         i7_bc, i5_bc = barcodes
+    elif i7.not_empty or i5.not_empty:
+        i7_bc, i5_bc = (barcodes[0], None) if i7.not_empty else (None, barcodes[0])
 
-    elif len(barcodes) == 1:
-        i7_bc, i5_bc = (barcodes[0], None) if has_i7 else (None, barcodes[0])
-
-    i7_bc = map_i7.get(i7_bc)
-    i5_bc = map_i5.get(i5_bc)
+    i7_bc = i7.correction_map.get(i7_bc)
+    i5_bc = i5.correction_map.get(i5_bc)
 
     i1_bc = None
 
-    if i7_bc in i7_wanted and i5_bc in i5_wanted:
+    (m1_hdr, m1_seq, m1_opt, m1_qcs), (m2_hdr, m2_seq, m2_opt, m2_qcs) = mate_pair
 
-        i1_bc = mate_pair[1][1][i1_start:i1_end]
-        _i1_corrected = map_i1.get(i1_bc)
+    if i1.not_empty:
+        i1_bc = m2_seq[i1_start:i1_end]
+        _i1_corrected = i1.correction_map.get(i1_bc)
 
-        if _i1_corrected in i1_wanted:
+        if _i1_corrected in i1.used_codes:
             i1_bc = _i1_corrected
-            (m1_hdr, m1_seq, m1_opt, m1_qcs), (m2_hdr, m2_seq, m2_opt, m2_qcs) = mate_pair
 
-            mate_1 = (
-                f"{m1_hdr[:-1]}+{_i1_corrected}\n"
-                f"{m1_seq}"
-                f"{m1_opt}"
-                f"{m1_qcs[:i1_start]}{m1_qcs[i1_end:]}"
-            )
+            m1_hdr = f"{m1_hdr[:-1]}+{_i1_corrected}\n"
 
-            mate_2 = (
-                f"{m2_hdr[:-1]}+{_i1_corrected}\n"
-                f"{m2_seq[:i1_start]}{m2_seq[i1_end:]}"
-                f"{m2_opt}"
-                f"{m2_qcs[:i1_start]}{m2_qcs[i1_end:]}"
-            )
+            m2_hdr = f"{m2_hdr[:-1]}+{_i1_corrected}\n"
+            m2_seq = f"{m2_seq[:i1_start]}{m2_seq[i1_end:]}"
+            m2_qcs = f"{m2_qcs[:i1_start]}{m2_qcs[i1_end:]}"
 
-            mate_pair = (mate_1, mate_2)
+    mate_1 = (
+        f"{m1_hdr}"
+        f"{m1_seq}"
+        f"{m1_opt}"
+        f"{m1_qcs}"
+    )
+
+    mate_2 = (
+        f"{m2_hdr}"
+        f"{m2_seq}"
+        f"{m2_opt}"
+        f"{m2_qcs}"
+    )
+
+    mate_pair = (mate_1, mate_2)
     return (i7_bc, i5_bc, i1_bc), mate_pair
 
 
