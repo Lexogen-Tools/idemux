@@ -47,7 +47,7 @@ def demux_i5_i1():
 
 @pytest.fixture
 def demux_i1():
-    # demulitplexing only on i1 one. doesnt matter of the file
+    # demulitplexing only on i1 one.
     # should not matter if the header contains i7 and i5 barcodes
     res = pathlib.Path(path.dirname(__file__)) / "resources" / "end_to_end"
     read_1 = res / "i7_i5_i1_read_1.fastq.gz"
