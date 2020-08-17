@@ -1,7 +1,9 @@
 #!/usr/bin/env python
 """Tests for `idemux` package."""
+import csv
+
 from idemux.ioutils.parser import get_pe_fastq, parse_sample_sheet
-from idemux.processing.demuxer import process_mate_pair
+from idemux.processing.demuxer import process_mate_pair, demux_paired_end
 
 import pathlib
 from os import path
@@ -198,8 +200,6 @@ def test_demux_i7_i5(demux_i7_i5):
         assert len(m2_seq) == len(m2_qs)
 
 
-
-
 def test_demux_i1(demux_i1):
     read1, read2, csv = demux_i1
     barcode_sample_map, barcodes = parse_sample_sheet(csv, i5_rc=False)
@@ -232,3 +232,19 @@ def test_demux_i1(demux_i1):
 
         assert len(m1_seq) == len(m1_qs)
         assert len(m2_seq) == len(m2_qs)
+
+
+def test_demux_paired_end(demux_i7_i5_i1, tmp_path):
+    expected_reads = 96
+
+    read1, read2, csv_file = demux_i7_i5_i1
+    barcode_sample_map, barcodes = parse_sample_sheet(csv_file, i5_rc=False)
+    demux_paired_end(barcode_sample_map, barcodes, read1, read2, I1_START, tmp_path)
+
+    stats_file = pathlib.Path(tmp_path / "demultipexing_stats.tsv")
+    with open(stats_file, 'r') as stats:
+        csv.register_dialect('strip', skipinitialspace=True)
+        reader = csv.DictReader(stats, restval=None, dialect='strip')
+        for row in reader:
+            n_reads = int(row.get("written_reads"))
+            assert n_reads == expected_reads
