@@ -401,7 +401,7 @@ def load_correction_map(barcode):
 
 
 def peek_into_fastq_files(fq_gz_1, fq_gz_2, has_i7, has_i5, has_i1, i7_length,
-                          i5_length, i1_start, i1_end, **args):
+                          i5_length, i1_start, i1_end, **kwargs):
     """Reads the first 100 lines of paired fastq.gz files and checks if everything is
     okay with the fastq header format.
 
