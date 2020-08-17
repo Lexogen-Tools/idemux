@@ -73,7 +73,7 @@ def test_is_sparse(mixed_none_values):
 def test_is_empty(none_values):
     bc = Barcode("i5", none_values)
     assert bc.empty
-    assert bc.length is None
+    assert bc.length == 0
 
 
 def test_length_getter(correct_length):

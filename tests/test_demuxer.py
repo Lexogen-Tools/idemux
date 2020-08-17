@@ -61,7 +61,7 @@ def demux_i7_i5():
     res = pathlib.Path(path.dirname(__file__)) / "resources" / "end_to_end"
     read_1 = res / "i7_i5_read_1.fastq.gz"
     read_2 = res / "i7_i5_read_2.fastq.gz"
-    csv = res / "i7_i1_sample_sheet.csv"
+    csv = res / "i7_i5_sample_sheet.csv"
     return read_1, read_2, csv
 
 
@@ -161,6 +161,43 @@ def test_demux_i7_i1(demux_i7_i1):
 
         assert len(m1_seq) == len(m1_qs)
         assert len(m2_seq) == len(m2_qs)
+
+
+def test_demux_i7_i5(demux_i7_i5):
+    read1, read2, csv = demux_i7_i5
+    barcode_sample_map, barcodes = parse_sample_sheet(csv, i5_rc=False)
+
+    _, _, i1 = barcodes
+
+    i1_end = I1_START + i1.length
+
+    for corrected_bc, processed_mates in demux_loop(read1, read2,
+                                                    barcodes,
+                                                    I1_START, i1_end):
+        i7_corr, i5_corr, i1_corr = corrected_bc
+
+        m1, m2 = processed_mates
+        m1_split = m1.split("\n")
+        m2_split = m2.split("\n")
+
+        m1_seq = m1_split[1]
+        m1_qs = m1_split[3]
+
+        m2_seq = m2_split[1]
+        m2_qs = m2_split[3]
+
+        expected_i7 = m1_seq[I7_POS]
+        expected_i5 = m1_seq[I5_POS]
+        expected_i1 = None
+
+        assert i7_corr == expected_i7
+        assert i5_corr == expected_i5
+        assert i1_corr == expected_i1
+
+        assert len(m1_seq) == len(m1_qs)
+        assert len(m2_seq) == len(m2_qs)
+
+
 
 
 def test_demux_i1(demux_i1):

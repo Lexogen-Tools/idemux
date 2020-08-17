@@ -372,7 +372,7 @@ def load_correction_map(barcode):
     """
     log.info(f"Trying to find the appropriate barcode set for {barcode.name}...")
     # When there are no barcodes specified, there is nothing to correct.
-    if barcode.length is None:
+    if barcode.length == 0:
         log.info(f"No barcodes have been specified for {barcode.name}.")
         barcode.correction_map = {None: None}
         return barcode

@@ -11,7 +11,7 @@ class Barcode:
     _sample_map: defaultdict = field(default_factory=lambda: defaultdict(list))
     reverse_complement: bool = False
     correction_map: dict = None
-    length: int = None
+    length: int = 0
     empty = True
     not_empty = False
     used_codes: set = field(default_factory=set)
