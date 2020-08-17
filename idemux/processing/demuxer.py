@@ -41,13 +41,14 @@ def process_mate_pair(mate_pair, i7, i5, i1, i1_start, i1_end):
         _i1_corrected = i1.correction_map.get(i1_bc)
 
         if _i1_corrected in i1.used_codes:
-            i1_bc = _i1_corrected
 
-            m1_hdr = f"{m1_hdr[:-1]}+{_i1_corrected}\n"
+            m1_hdr = f"{m1_hdr[:-1]}+{i1_bc}\n"
 
-            m2_hdr = f"{m2_hdr[:-1]}+{_i1_corrected}\n"
+            m2_hdr = f"{m2_hdr[:-1]}+{i1_bc}\n"
             m2_seq = f"{m2_seq[:i1_start]}{m2_seq[i1_end:]}"
             m2_qcs = f"{m2_qcs[:i1_start]}{m2_qcs[i1_end:]}"
+
+            i1_bc = _i1_corrected
 
     mate_1 = (
         f"{m1_hdr}"
