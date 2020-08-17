@@ -70,6 +70,7 @@ def test_is_sparse(mixed_none_values):
     bc = Barcode("i5", mixed_none_values)
     assert bc.sparse
 
+
 def test_is_empty(none_values):
     bc = Barcode("i5", none_values)
     assert bc.empty

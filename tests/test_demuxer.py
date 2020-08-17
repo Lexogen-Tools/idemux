@@ -1,17 +1,11 @@
 #!/usr/bin/env python
 """Tests for `idemux` package."""
 import csv
-
-from idemux.ioutils.parser import get_pe_fastq, parse_sample_sheet
-from idemux.processing.demuxer import process_mate_pair, demux_paired_end
-
 import pathlib
-from os import path
-
 import pytest
-
+from os import path
 from idemux.ioutils.parser import parse_sample_sheet, get_pe_fastq
-from idemux.processing.demuxer import process_mate_pair
+from idemux.processing.demuxer import process_mate_pair, demux_paired_end
 
 I1_START = 10
 
