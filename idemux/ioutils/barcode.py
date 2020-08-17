@@ -10,12 +10,16 @@ class Barcode:
     name: str
     _sample_map: defaultdict = field(default_factory=lambda: defaultdict(list))
     reverse_complement: bool = False
-    _observed_lengths: set = field(default_factory=set)
     correction_map: dict = None
     length: int = None
+    empty = True
+    not_empty = False
+    used_codes: set = field(default_factory=set)
+    _observed_lengths: set = field(default_factory=set)
     _lengths_96_barcodes = {8, 10, 12}
     _lengths_384_barcodes = {10, 12}
     _allowed_lengths = {6, 8, 10, 12}
+
 
     def __post_init__(self):
         # if the barcode is reverse complement add _rc to the name
@@ -23,6 +27,9 @@ class Barcode:
         if self.reverse_complement:
             self.name = f"{self.name}_rc"
         self._check_length()
+        self.used_codes = set(self._sample_map.keys())
+        self.empty = None in self.used_codes and len(self.used_codes) == 1
+        self.not_empty = not self.empty
 
     def _check_length(self):
         # barcodes for each type need to be of the same length. This is as the
@@ -68,21 +75,8 @@ class Barcode:
         return self._sample_map.get(None)
 
     @property
-    def used_codes(self):
-        return set(self._sample_map.keys())
-
-    @property
     def sparse(self):
         return None in self.used_codes and len(self.used_codes) > 1
-
-    @property
-    def empty(self):
-        return None in self.used_codes and len(self.used_codes) == 1
-
-    @property
-    def not_empty(self):
-        return not self.empty
-
 
     @property
     def full(self):
