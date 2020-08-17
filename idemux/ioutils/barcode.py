@@ -80,5 +80,10 @@ class Barcode:
         return None in self.used_codes and len(self.used_codes) == 1
 
     @property
+    def not_empty(self):
+        return not self.empty
+
+
+    @property
     def full(self):
         return None not in self.used_codes

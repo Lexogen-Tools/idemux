@@ -50,7 +50,7 @@ def process_mate_pair(mate_pair,
 
             mate_1 = (
                 f"{m1_hdr[:-1]}+{_i1_corrected}\n"
-                f"{m1_seq[:i1_start]}{m1_seq[i1_end:]}"
+                f"{m1_seq}"
                 f"{m1_opt}"
                 f"{m1_qcs[:i1_start]}{m1_qcs[i1_end:]}"
             )
