@@ -9,11 +9,8 @@ from idemux.ioutils.writer import write_summary
 
 log = logging.getLogger(__name__)
 
-def process_mate_pair(mate_pair,
-                      i7_wanted, i5_wanted, i1_wanted,
-                      has_i7,
-                      map_i7, map_i5, map_i1,
-                      i1_start, i1_end):
+
+def process_mate_pair(mate_pair, i7, i5, i1, i1_start, i1_end):
     """process mate pair
 
     Returns
@@ -73,22 +70,13 @@ def demux_paired_end(barcode_sample_map, barcodes, read1, read2, i1_start, outpu
     # load the maps that will be used for error correction. As the tool does not allow
     # different length we only need to load the used length
     i7, i5, i1 = barcodes
-    i7_wanted = i7.used_codes
-    i5_wanted = i5.used_codes
-    i1_wanted = i1.used_codes
-    map_i7 = i7.correction_map
-    map_i5 = i5.correction_map
-    map_i1 = i1.correction_map
     i1_end = i1_start + i1.length
 
-    # if None is in *_wanted no barcode has been specified
-    has_i7 = not i7.empty
-    has_i5 = not i5.empty
-    has_i1 = not i1.empty
-
     # before doing any processing check if the fastq file is okay.
-    peek_into_fastq_files(read1, read2, has_i7, has_i5, has_i1, i7.length,
-                          i5.length, i1_start, i1_end)
+    peek_into_fastq_files(read1, read2,
+                          i7.not_empty, i5.not_empty, i1.not_empty,
+                          i7.length, i5.length,
+                          i1_start, i1_end)
     read_counter = Counter()
     log.info("Staring demultiplexing")
     # first we need to open the output files the reads should get sorted into
@@ -98,13 +86,7 @@ def demux_paired_end(barcode_sample_map, barcodes, read1, read2, i1_start, outpu
             for mate_pair in tqdm(pe_reads):
                 # here we do the error correction and get obtain the i1 barcode if present
                 barcodes, processed_mates = process_mate_pair(mate_pair,
-                                                              i7_wanted,
-                                                              i5_wanted,
-                                                              i1_wanted,
-                                                              has_i7,
-                                                              map_i7,
-                                                              map_i5,
-                                                              map_i1,
+                                                              i7, i5, i1,
                                                               i1_start,
                                                               i1_end)
                 # When a barcode combination is unknown/not specified in the sample sheet
