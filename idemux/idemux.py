@@ -1,5 +1,7 @@
 import argparse
 import logging
+import sys
+
 from idemux import __version__
 from idemux.ioutils.parser import parse_sample_sheet
 from idemux.processing.demuxer import demux_paired_end
@@ -80,4 +82,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())
