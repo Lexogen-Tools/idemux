@@ -63,7 +63,8 @@ def get_cli_parser():
                         default=10,
                         dest='i1_start',
                         help='Start position of the i1 index (0-based) on read 2.')
-    parser.add_argument('--version', action='version', version='%(prog)s ' + __version__)
+    parser.add_argument('-v', '--version', action='version', version='%(prog)s ' +
+                                                                     __version__)
     return parser
 
 
