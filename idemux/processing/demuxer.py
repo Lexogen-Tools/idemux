@@ -82,7 +82,7 @@ def demux_paired_end(barcode_sample_map, barcodes, read1, read2, i1_start, outpu
                           i7.length, i5.length,
                           i1_start, i1_end)
     read_counter = Counter()
-    log.info("Staring demultiplexing")
+    log.info("Starting demultiplexing")
     # first we need to open the output files the reads should get sorted into
     with FileHandler(barcode_sample_map, output_dir) as file_handler:
         # then we iterate over all the paired end reads

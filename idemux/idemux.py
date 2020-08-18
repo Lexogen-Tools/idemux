@@ -4,7 +4,9 @@ from idemux import __version__
 from idemux.ioutils.parser import parse_sample_sheet
 from idemux.processing.demuxer import demux_paired_end
 
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(format='%(asctime)s %(levelname)-8s %(message)s',
+                    datefmt='%Y-%m-%d %H:%M:%S',
+                    level=logging.INFO)
 log = logging.getLogger()
 
 
