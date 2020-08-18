@@ -41,7 +41,6 @@ def process_mate_pair(mate_pair, i7, i5, i1, i1_start, i1_end):
         _i1_corrected = i1.correction_map.get(i1_bc)
 
         if _i1_corrected in i1.used_codes:
-
             m1_hdr = f"{m1_hdr[:-1]}+{i1_bc}\n"
 
             m2_hdr = f"{m2_hdr[:-1]}+{i1_bc}\n"
@@ -101,4 +100,5 @@ def demux_paired_end(barcode_sample_map, barcodes, read1, read2, i1_start, outpu
                                                     file_handler["undetermined"])
                 fq_out1.write(processed_mates[0].encode())
                 fq_out2.write(processed_mates[1].encode())
+                read_counter[barcode_sample_map.get(barcodes, "undetermined")] += 1
     write_summary(read_counter, output_dir)

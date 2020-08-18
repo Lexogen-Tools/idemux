@@ -229,7 +229,7 @@ def test_demux_i1(demux_i1):
 
 
 def test_demux_paired_end(demux_i7_i5_i1, tmp_path):
-    expected_reads = 96
+    expected_reads = 100
 
     read1, read2, csv_file = demux_i7_i5_i1
     barcode_sample_map, barcodes = parse_sample_sheet(csv_file, i5_rc=False)
@@ -238,7 +238,9 @@ def test_demux_paired_end(demux_i7_i5_i1, tmp_path):
     stats_file = pathlib.Path(tmp_path / "demultipexing_stats.tsv")
     with open(stats_file, 'r') as stats:
         csv.register_dialect('strip', skipinitialspace=True)
-        reader = csv.DictReader(stats, restval=None, dialect='strip')
+        reader = csv.DictReader(stats, delimiter='\t', dialect='strip')
         for row in reader:
             n_reads = int(row.get("written_reads"))
             assert n_reads == expected_reads
+
+# TODO write test for mixed cases
