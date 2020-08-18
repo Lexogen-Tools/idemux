@@ -445,11 +445,11 @@ def check_mate_pair(mate_pair, has_i7, has_i5, has_i1, i7_length, i5_length,
 def check_mate2_length(mate2, i1_start, i1_end):
     seq_idx = 1
     seq = mate2[seq_idx]
-    if len(seq) < i1_end:
+    if len(seq[:-1]) < i1_end:
         raise ValueError(f"Mate 2 is too short for the provided i1 barcode settings. "
                          f"According to your settings i1 starts at position {i1_start} "
-                         f"and has a length of {i1_start - i1_start}. The sequence of "
-                         f"mate 2 is however only {len(seq)} nt long.")
+                         f"and has a length of {i1_end - i1_start}. The sequence of "
+                         f"mate 2 is however only {len(seq[:-1])} nt long.")
 
 
 def check_fastq_headers(mate_pair, has_i7, has_i5, i7_length, i5_length):
@@ -479,7 +479,6 @@ def check_fastq_headers(mate_pair, has_i7, has_i5, i7_length, i5_length):
                      f"Mate2 header: {header_mate_2}")
         raise ValueError(error_msg)
 
-
     number_bc_m1 = len(bcs_mate1)
     number_bc_m2 = len(bcs_mate2)
 
@@ -502,7 +501,6 @@ def check_fastq_headers(mate_pair, has_i7, has_i5, i7_length, i5_length):
                      f"Example: {example_header}\n"
                      f"Observed headers: {[header_mate_1, header_mate_2]}")
         raise ValueError(error_msg)
-
 
     # when there are 2 barcodes in the fastq header the orientation is i7,i5
     if has_i7 and has_i5:
