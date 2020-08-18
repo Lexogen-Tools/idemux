@@ -31,7 +31,7 @@ setup(
     author_email='falko.hofmann@lexogen.com, michael.moldaschl@lexogen.com',
     python_requires='>=3.6',
     classifiers=[
-        'Development Status :: 2 - Pre-Alpha',
+        'Development Status :: 4 - Beta',
         'Intended Audience :: Science/Research',
         'Topic :: Scientific/Engineering :: Bio-Informatics',
         'Natural Language :: English',
@@ -48,15 +48,13 @@ setup(
     keywords='idemux',
     name='idemux',
     entry_points={
-        'console_scripts': [
-            'idemux=idemux.__main__:main'
-        ],
+        'console_scripts': ['idemux=idemux.__main__:main'],
     },
     packages=find_packages(include=['idemux', 'idemux.*']),
     setup_requires=setup_requirements,
     test_suite='tests',
     tests_require=test_requirements,
-    url='https://github.com/falkohof/idemux',
+    url='https://github.com/lexogen-tools/idemux',
     zip_safe=False,
     use_scm_version={
         # duplicated config from pyproject.toml; keep in sync
