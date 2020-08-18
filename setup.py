@@ -11,7 +11,9 @@ with open('CHANGELOG.rst') as changelog_file:
     history = changelog_file.read()
 
 requirements = [
-    'importlib_resources; python_version < "3.7"'
+    'importlib_resources; python_version < "3.7"',
+    'dataclasses; python_version < "3.7"',
+    'tqdm'
 ]
 
 setup_requirements = ['pytest-runner',
@@ -19,7 +21,10 @@ setup_requirements = ['pytest-runner',
                       'wheel',
                       'setuptools_scm']
 
-test_requirements = ['pytest>=3', ]
+test_requirements = ['pytest>=3',
+                     "pytest-cov",
+                     "pytest-pep8",
+                     "coverage"]
 
 setup(
     author="Falko Hofmann, Michael Moldaschl",
