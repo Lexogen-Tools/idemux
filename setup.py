@@ -47,6 +47,11 @@ setup(
     include_package_data=True,
     keywords='idemux',
     name='idemux',
+    entry_points={
+        'console_scripts': [
+            'idemux=idemux.__main__:main'
+        ],
+    },
     packages=find_packages(include=['idemux', 'idemux.*']),
     setup_requires=setup_requirements,
     test_suite='tests',
