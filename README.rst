@@ -25,6 +25,3 @@ Help
 * OSError: [Errno 24] Too many open files
 * ulimit -n number_of_samples_x2 (in 1024 increments)
 
-
-Credits
--------
