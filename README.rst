@@ -123,14 +123,13 @@ happens.
 
 1. Sample names need to be unique.
 2. Barcode combinations need to be unique.
-3. No mixed/sparse i7, i5 indexing.
-   i7 and i5 need to be either present for all samples or none at all.
-4. Sparse indexing for i1 is allowed.
+3. i7 and/or i5 indices have to be used consistently within the csv file.
+   i7 and/or i5 indices need to be either present for all samples or none at all.
+4. In contrast to i7/i5 indices, i1 indices can be used for a subset of samples in the csv file.
 5. Absence of a barcode needs to be indicated by an empty field (no value between
    comas ``,,``).
 6. If your i5 has been sequenced as reverse complement, *do not* enter the reverse
    complement sequences in the sample sheet. Use the ``--i5-rc`` option!
-
 
 |
 
