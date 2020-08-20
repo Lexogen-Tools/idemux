@@ -22,7 +22,7 @@ will correct common sequencing errors in the sequenced barcodes. This will allow
 to retain more reads from your sequencing experiment, while minimizing cross contamination.
 
 
-Idemux use is permitted under the following `licence <LICENCE.txt>`_.
+Idemux use is permitted under the following `licence <LICENCE>`_.
 
 **General usage:**
 ::
