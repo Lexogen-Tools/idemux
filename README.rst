@@ -18,7 +18,7 @@ Idemux can demultiplex based on i7, i5 and i1 inline barcodes. While this tool
 can generally be used to demultiplex on any barcodes (as long as they are correctly supplied
 and in the fastq header), it shines when using it in combination with
 `Lexogen indices <https://www.lexogen.com/indexing/12nt-dual-indexing-kits/>`_, as it
-will correct common sequencing errors in the sequenced barcodes. This will allowing you
+will correct common sequencing errors in the sequenced barcodes. This will allow you
 to retain more reads from your sequencing experiment, without causing and bleed or
 potential cross contamination.
 
@@ -270,7 +270,24 @@ Example commands:
 
 
 
+Technicalities
+---------------
 
+When you run idemux the following will happen:
+* it will check the fastq header for barcodes and expects them in the following format:
+
+* when you demultiplex based on i1 inline barcodes, the a successful recognized barcode
+  sequence will be cut out and removed from read 2. This is a design choice and will leave
+  you with the 10 nt UMI + the nucleotides that potentially follow the i1 barcode
+  (or don't).
+
+This allows you to:
+1. Use other software, such as UMI_tools to deal with the 10nt UMI if desired
+2. To demuliplex lanes where QuantSeq-Pool has been pooled with other libraries and read 2
+   has been sequenced longer than the actual barcoe
+
+If you sequenced i5 as a reverse complement, make sure to not fill in reverse complement
+barcodes into the sample sheet, but to use the ``--i5-rc`` parameter.
 
 Help
 ------
@@ -288,3 +305,10 @@ written to at the ame time. In order to temporarily increase the limit run:
 
 If you are looking for a permanent solution you can change your ulimit values
 `this way <https://access.redhat.com/solutions/61334>`_.
+
+In case you experience any issues with this software please open an issue describing your
+problem. Make sure to post the version of the tool you are running (``-v, --version``)
+and your os.
+
+Sample sheet examples
+---------------------
