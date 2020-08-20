@@ -87,14 +87,12 @@ def parse_sample_sheet(sample_sheet, i5_rc, **kwargs):
 
     Arguments:
         sample_sheet (str): Path to a sample_sheet.cvs. See examples for formatting
+        i5_rc (bool): Should the i5 indices be reverse complemented?
 
     Returns:
-        barcode_sample_map (dict): A dict mapping a tuple of barcodes to sample names
-            (i7, i5, i1): sample_name
-        used_barcodes (tuple): A tuple of 3 sets, each containing the i7, i5 and i1
-            barcodes specified in the sample sheet
-        barcode_lengths (dict): A dict mapping the index name to a list barcode
-            lengths.  {"i7": list(int), "i5": list(int), "i1": list(int)}
+        dict: A dict mapping a tuple of barcodes to sample names (i7, i5, i1): sample_name
+        tuple (Barcodes): A tuple of 3 barcode dataclasses, each containing the i7, i5
+            and i1 barcode
 
     Except:
         ValueError: Will initiate sys.exit(1)
@@ -102,13 +100,12 @@ def parse_sample_sheet(sample_sheet, i5_rc, **kwargs):
     # we use these to keep track which lengths are beeing used for each barcode
     i7_lengths, i5_lengths, i1_lengths = set(), set(), set()
 
-    # we use these to keep track of which single match to which sample(s)
+    # we use these to keep track of which single barcode matches to which sample(s)
     i7_barcodes = defaultdict(list)
     i5_barcodes = defaultdict(list)
     i1_barcodes = defaultdict(list)
 
-    # this is for keeping track which unique barcode combination is associated with a
-    # sample
+    # this is for keeping track which unique barcode combination belongs to a sample
     barcode_sample_map = dict()
     # we use this for checking for duplicated sample names
     sample_count = Counter()
@@ -140,7 +137,7 @@ def parse_sample_sheet(sample_sheet, i5_rc, **kwargs):
                     raise ValueError(error_msg)
                 # we use this to keep track of duplicate sample names
                 sample_count[sample_name] += 1
-
+                # as ordered dicts always return an empty string instead of None
                 _i7 = row.get('i7')
                 i7_bc = _i7 if _i7 else None
                 # i5 can be sequenced as reverse complement, translate if needed
@@ -171,7 +168,8 @@ def parse_sample_sheet(sample_sheet, i5_rc, **kwargs):
                 i7_lengths.add(i7_bc if i7_bc is None else len(i7_bc))
                 i5_lengths.add(i5_bc if i5_bc is None else len(i5_bc))
                 i1_lengths.add(i1_bc if i1_bc is None else len(i1_bc))
-
+        # putting everything in a data class to make it tidier.
+        # TODO: add addtional methods to data class and move this into the loop
         i7 = Barcode('i7', i7_barcodes)
         i5 = Barcode('i5', i5_barcodes, i5_rc)
         i1 = Barcode('i1', i1_barcodes)
@@ -181,7 +179,7 @@ def parse_sample_sheet(sample_sheet, i5_rc, **kwargs):
         has_valid_barcode_combinations(*barcodes)
         # sample names have to be unique as they determine the outfile name. Otherwise
         # we get problems when we try to write reads belonging to different barcode
-        # combinations to one file.
+        # combinations to one file. We do this this way so we throw more accurate errors
         duplicated_sample_names = [k for k, v in sample_count.items() if v > 1]
         if duplicated_sample_names:
             error_msg = ("The sample sheet contains duplicate sample names. Sample "
@@ -258,10 +256,10 @@ def has_valid_barcode_combinations(i7, i5, i1, *args):
         i1 (Barcode): Barcode dataclass of i1 barcodes
 
     Returns:
-        is_valid (bool): True when valid barcode combinations are supplied (see above)
+        bool: True when valid barcode combinations are supplied (see above)
 
     Raises:
-        ValueError (err): When supplied an invalid barcode combination (see above)
+        ValueError: When supplied an invalid barcode combination (see above)
     """
     # allowed cases, we dont actually need these return values, but these make the logic
     # much more obvious and human readable.
@@ -353,6 +351,14 @@ def fastq_lines_to_reads(fastq_lines):
 
 
 def get_map_from_resource(package, resource):
+    """Load a 2 column tsv file from the specified package and return as dict.
+    Args:
+        package (str): Package to load resourcess from
+        resource (str): Name of the tsv to load
+
+    Return:
+        dict(str,str): A dict mapping the first and second column.
+    """
     log.debug("Loading error correction map from %s", resource)
     mapping = dict()
     with resources.open_text(package, resource) as tsv_file:
@@ -363,14 +369,13 @@ def get_map_from_resource(package, resource):
 
 
 def load_correction_map(barcode):
-    """Reads a tsv barcodes file, converts them to byes and returns them as a dict.
-    These dicts are used to map erroneous barcodes to their corrected version.
+    """Adds the right correction map to the provided barcode object returns them as a
+    dict. Correction maps are used to map erroneous barcodes to their corrected version.
     Args:
-        barcode_type (str): A path pointing to a error correction map file.
-        barcode_length (int): A path pointing to a error correction map file.
+        barcode (Barcode): A Barcode data class object
 
     Return:
-        dict (dict): correction_map : <b'erroneous_barcode', b'corrected_barcode'>
+        Barcode: Updated data class with correction map set.
     """
     log.info(f"Trying to find the appropriate barcode set for {barcode.name}...")
     # When there are no barcodes specified, there is nothing to correct.
@@ -379,24 +384,34 @@ def load_correction_map(barcode):
         barcode.correction_map = {None: None}
         return barcode
 
+    # barcodes can be bough as set of 96 and 348. 348 can also be not fully sequenced
+    # and are then ident with the 96 set. Therefore we need to check from which set
+    # the provided barcodes originate. We then construct a string describing the
+    # proper resource to load.
     for set_size in barcode.get_set_sizes():
         package_str = f"idemux.resources.barcodes.{barcode.name}"
         file_str = f"base_mapping_b{set_size}_l{barcode.length}.tsv"
 
         corr_map = get_map_from_resource(package_str, file_str)
         _barcode_set = set(corr_map.values())
+        # we don't want Nones here as this will mess up the subset testing, as the error
+        # correction maps don't contain Nones
         _barcodes_given = barcode.get_used_codes(drop_none=True)
         if _barcodes_given <= _barcode_set:
             log.info(f"Correct set found. Used set is {set_size} barcodes with "
                      f"{barcode.length} nt length.")
             barcode.correction_map = corr_map
             return barcode
-
+    # we want the user to know when non Lexogen barcodes are supplied as no no error
+    # correction is happening. However, we suppress it for length 6 as these cant
+    # be error corrected and we don't want to incent insecurity when using old 6 nt
+    # barcodes
     if barcode.length != 6:
         log.warning(f"No fitting Lexogen barcode set found for {barcode.name}. No "
                     f"error correction will take place for this barcode. Are you using "
                     f"valid Lexogen barodes?")
-
+    # if there is map for error correction, return a map that maps the given barcodes
+    # to itself
     _bc_list = list(barcode.used_codes)
     barcode.correction_map = dict(zip(_bc_list, _bc_list))
     return barcode
@@ -404,7 +419,7 @@ def load_correction_map(barcode):
 
 def peek_into_fastq_files(fq_gz_1, fq_gz_2, has_i7, has_i5, has_i1, i7_length,
                           i5_length, i1_start, i1_end, **kwargs):
-    """Reads the first 100 lines of paired fastq.gz files and checks if everything is
+    """Reads the first 1000 lines of paired fastq.gz files and checks if everything is
     okay with the fastq header format.
 
     Args:
@@ -424,8 +439,10 @@ def peek_into_fastq_files(fq_gz_1, fq_gz_2, has_i7, has_i5, has_i1, i7_length,
 
     with get_pe_fastq(fq_gz_1, fq_gz_2) as pe_reads:
         for mate_pair in pe_reads:
+            # check if the formatting is okay
             check_mate_pair(mate_pair, has_i7, has_i5, has_i1, i7_length, i5_length,
                             i1_start, i1_end)
+            # TODO: could be replaced with enumerate
             counter += 1
             if counter == lines_to_check:
                 break
