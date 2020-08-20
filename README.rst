@@ -15,15 +15,15 @@ Idemux is a command line tool designed to demultiplex paired-end fastq files fro
 `QuantSeq-Pool <https://www.lexogen.com/quantseq-pool-sample-barcoded-3mrna-sequencing/>`_.
 
 Idemux can demultiplex based on i7, i5 and i1 inline barcodes. While this tool
-can generally be used to demultiplex on any barcodes, it shines when using it in
-combination with
+can generally be used to demultiplex on any barcodes (as long as they are correctly supplied
+and in the fastq header), it shines when using it in combination with
 `Lexogen indices <https://www.lexogen.com/indexing/12nt-dual-indexing-kits/>`_, as it
 will correct common sequencing errors in the sequenced barcodes. This will allowing you
 to retain more reads from your sequencing experiment, without causing and bleed or
 potential cross contamination.
 
 
-Idemux use is permitted under the following `licence <LICENCE.txt>`_
+Idemux use is permitted under the following `licence <LICENCE.txt>`_.
 
 **General usage:**
 ::
@@ -282,7 +282,8 @@ following error:
 This error occours because most OS have a limit on how many files can be opened and
 written to at the ame time. In order to temporarily increase the limit run:
 ::
-    # multiply your sample number * 2 and round to the next multiple of 1024
+    # multiply your sample number*2 (as data is paired end)
+    # then round to the next multiple of 1024
     ulimit -n the_number_above
 
 If you are looking for a permanent solution you can change your ulimit values
