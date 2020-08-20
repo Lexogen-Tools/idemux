@@ -30,7 +30,7 @@ Idemux use is permitted under the following `licence <LICENCE.txt>`_.
            [--i1-start I1_START] [--i5-rc] [-v]
 
 
-**Running idemux:**
+**Run idemux:**
 ::
 
     idemux --r1 read_1.fastq.gz --r2 read_2.fastq.gz --sample-sheet samples.csv --out /some/output/path --i1-start pos_in_read_2
@@ -49,12 +49,12 @@ Getting started
 ---------------
 To get stated with demultiplexing you need to:
 
-1. Install idemux
-2. Prepare a sample sheet csv
-3. Run idemux
+1. `Install idemux <1. Installation_>`_
+2. `Prepare a sample sheet csv <2. Preparing the sample sheet_>`_
+3. `Run idemux <3. Running idemux_>`_
 
 1. Installation
-==============
+===============
 
 Idemux is available on pypi. To install idemux via pip:
 
@@ -86,7 +86,7 @@ Idemux will also soon be available via bioconda!
 
 
 2. Preparing the sample sheet
-==========================
+=============================
 In order to run idemux on your QuantSeq-Pool data you first need to prepare a `csv file
 <https://en.wikipedia.org/wiki/Comma-separated_values>`_.
 We call this csv a sample sheet and it specifies which barcodes correspond to each
@@ -131,9 +131,100 @@ However, idemux will do its best to tell you where the problem lies, once this h
 
 |
 
-See below for some examples of sample/barcode combinations that are *allowed* or
+See `below <Sample sheet examples_>`_. for more showcases of sample/barcode combinations that are *allowed* or
 *disallowed*.
 
+
+3. Running idemux
+=================
+Once you have installed the tool you can run it by typing ``idemux`` in the terminal.
+
+Idemux accepts the following arguments:
+::
+
+    required arguments:
+      --r1 READ1                   path to gzipped read 1 fastq file
+      --r2 READ2                   path to gzipped read 2 fastq file
+      --sample-sheet CSV           csv file describing sample names, and barcode combinations
+      --out OUTPUT_DIR             where to write the output files
+
+    optional arguments:
+      --i5-rc                      when the i5 barcode has been sequenced as reverse complement.
+                                   make sure to always use non-reverse complement sequences in the sample sheet
+      --i1_start POS               start position of the i1 index (1-based) on read 2 (default: 11)
+      -v, --version                show program's version number and exit
+      -h, --help                   show help message and exit
+
+
+Example commands:
+::
+
+    # demultiplexes read 1 and 2 into the folder 'demux'
+    idemux --r1 read_1.fastq.gz --r2 read_2.fastq.gz --sample-sheet samples.csv --out demux
+
+    # demultiplexing assuming the i1 barcode starts at the first base
+    idemux --r1 read_1.fastq.gz --r2 read_2.fastq.gz --sample-sheet samples.csv --out demux --i1_start 1
+
+    # demultiplexing assuming i5 is present as reverse complement in the fastq header
+    # if he i5 has been sequenced as reverse complement use this option and provide
+    # the NON reverse complement sequences in the sample sheet.
+    idemux --r1 read_1.fastq.gz --r2 read_2.fastq.gz --sample-sheet samples.csv --out demux
+
+After a successful completed run idemux will write summary report to the output folder
+('demultipexing_stats.tsv').
+
+Technicalities
+---------------
+
+When you run idemux the following will happen:
+
+* It will check if your sample sheet is okay. See `here <Sample sheet examples_>`_ for examples
+
+* It will check the fastq header for barcodes and expects them in the following format:
+
+    single index (i7 or i5): @NB502007:379:HM7H2BGXF:1:11101:24585:1069 1:N:0:TCAGGTAANNTT
+
+    dual index (i7 and i5): @NB502007:379:HM7H2BGXF:1:11101:24585:1069 1:N:0:TCAGGTAANNTT+NANGGNNCNNNN
+
+* Reads that cannot be demultiplexed will be written to undetermined_R{1/2}.fastq.gz
+
+* When you demultiplex based on i1 inline barcodes, the a successful recognized barcode
+  sequence will be cut out and removed from read 2. This is a design choice and will leave
+  you with the 10 nt UMI + the nucleotides that potentially follow the i1 barcode
+  (or don't).
+
+This allows you to:
+
+1. Use other software, such as UMI_tools to deal with the 10nt UMI if desired
+2. To demuliplex lanes where QuantSeq-Pool has been pooled with other libraries and read
+   2 has been sequenced longer than the actual barcode.
+
+If you sequenced i5 as a reverse complement, make sure to not fill in reverse complement
+barcodes into the sample sheet, but to use the ``--i5-rc`` parameter.
+
+Help
+------
+If you are demuliplexing a large number of samples (more than 500) you might encounter the
+following error:
+
+* ``OSError: [Errno 24] Too many open files``
+
+This error occurs because most OS have a limit on how many files can be opened and
+written to at the ame time. In order to temporarily increase the limit run:
+::
+    # multiply your sample number*2 (as data is paired end)
+    # then round to the next multiple of 1024
+    ulimit -n the_number_above
+
+If you are looking for a permanent solution you can change your ulimit values
+`this way <https://access.redhat.com/solutions/61334>`_.
+
+In case you experience any issues with this software please open an issue describing your
+problem. Make sure to post the version of the tool you are running (``-v, --version``)
+and your os.
+
+Sample sheet examples
+---------------------
 *This is allowed:*
 ::
     # demultiplexing via full i7, i5, i1
@@ -228,84 +319,3 @@ See below for some examples of sample/barcode combinations that are *allowed* or
     # wrong column headers
     wrong_col_name,i7,i5,i1
     sample_0,AAAACATGCGTT,CCCCACTGAGTT,AAAACATGCGTT
-
-
-3. Running idemux
-=================
-Once you have installed the tool you can run it by typing ``idemux`` in the terminal.
-
-Idemux accepts the following arguments:
-::
-
-    required arguments:
-      --r1 READ1                   path to gzipped read 1 fastq file
-      --r2 READ2                   path to gzipped read 2 fastq file
-      --sample-sheet CSV           csv file describing sample names, and barcode combinations
-      --out OUTPUT_DIR             where to write the output files
-
-    optional arguments:
-      --i5-rc                      when the i5 barcode has been sequenced as reverse complement.
-                                   make sure to always use non-reverse complement sequences in the sample sheet
-      --i1_start POS               start position of the i1 index (1-based) on read 2 (default: 11)
-      -v, --version                show program's version number and exit
-      -h, --help                   show help message and exit
-
-
-Example commands:
-::
-
-    # demultiplexes read 1 and 2 into the folder 'demux'
-    idemux --r1 read_1.fastq.gz --r2 read_2.fastq.gz --sample-sheet samples.csv --out demux
-
-    # demultiplexing assuming the i1 barcode starts at the first base
-    idemux --r1 read_1.fastq.gz --r2 read_2.fastq.gz --sample-sheet samples.csv --out demux --i1_start 1
-
-    # demultiplexing assuming i5 is present as reverse complement in the fastq header
-    # if he i5 has been sequenced as reverse complement use this option and provide
-    # the NON reverse complement sequences in the sample sheet.
-    idemux --r1 read_1.fastq.gz --r2 read_2.fastq.gz --sample-sheet samples.csv --out demux
-
-
-
-Technicalities
----------------
-
-When you run idemux the following will happen:
-* it will check the fastq header for barcodes and expects them in the following format:
-
-* when you demultiplex based on i1 inline barcodes, the a successful recognized barcode
-  sequence will be cut out and removed from read 2. This is a design choice and will leave
-  you with the 10 nt UMI + the nucleotides that potentially follow the i1 barcode
-  (or don't).
-
-This allows you to:
-1. Use other software, such as UMI_tools to deal with the 10nt UMI if desired
-2. To demuliplex lanes where QuantSeq-Pool has been pooled with other libraries and read
-   2 has been sequenced longer than the actual barcode.
-
-If you sequenced i5 as a reverse complement, make sure to not fill in reverse complement
-barcodes into the sample sheet, but to use the ``--i5-rc`` parameter.
-
-Help
-------
-If you are demuliplexing a large number of samples (more than 500) you might encounter the
-following error:
-
-* ``OSError: [Errno 24] Too many open files``
-
-This error occurs because most OS have a limit on how many files can be opened and
-written to at the ame time. In order to temporarily increase the limit run:
-::
-    # multiply your sample number*2 (as data is paired end)
-    # then round to the next multiple of 1024
-    ulimit -n the_number_above
-
-If you are looking for a permanent solution you can change your ulimit values
-`this way <https://access.redhat.com/solutions/61334>`_.
-
-In case you experience any issues with this software please open an issue describing your
-problem. Make sure to post the version of the tool you are running (``-v, --version``)
-and your os.
-
-Sample sheet examples
----------------------
