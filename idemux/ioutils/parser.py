@@ -18,6 +18,8 @@ log = logging.getLogger(__name__)
 
 
 def parse_sample_sheet(sample_sheet, i5_rc, **kwargs):
+    # TODO: implement regex check to determine if barcodes are DNA bases
+    # TODO: convert strings to uppercase when parsed
     """Function to parse the sample_sheet.csv.
 
     This function takes the path to a idemux sample sheet reads the data and does some
