@@ -30,41 +30,41 @@ def get_cli_parser():
                                type=str,
                                dest='read1',
                                required=True,
-                               help='Path to the read 1 fastq file that should be '
-                                    'demultiplexed'
+                               help='gzipped read 1 fastq file'
                                )
     required_args.add_argument('--r2',
                                type=str,
                                dest='read2',
                                required=True,
-                               help='Path to the read 2 fastq file that should be '
-                                    'demultiplexed'
+                               help='path to gzipped read 2 fastq file'
                                )
 
     required_args.add_argument('--sample-sheet',
                                type=str,
                                dest='sample_sheet',
-                               help='Csv file containing sample names, i7, i5 and i1 '
-                                    'barcodes'
+                               required=True,
+                               help='csv file describing sample names, and barcode '
+                                    'combinations '
                                )
     required_args.add_argument('--out',
                                type=str,
                                dest='output_dir',
                                required=True,
-                               help='Where to write the output files.'
+                               help='where to write the output files'
                                )
     parser.add_argument('--i5-rc',
                         dest='i5_rc',
                         action='store_true',
                         default=False,
-                        help='Set this flag if the i5 barcode has been sequenced as '
-                             'reverse complement and the barcodes you provided should '
-                             'be reverse complemented.')
+                        help='when the i5 barcode has been sequenced as reverse '
+                             'complement. make sure to enter non-reverse complement '
+                             'sequences in the barcode file ')
     parser.add_argument('--i1-start',
                         type=int,
-                        default=10,
+                        default=11,
                         dest='i1_start',
-                        help='Start position of the i1 index (0-based) on read 2.')
+                        help='start position of the i1 index (1-based) on read 2 '
+                             '(default: 11)')
     parser.add_argument('-v', '--version', action='version', version='%(prog)s ' +
                                                                      __version__)
     return parser
@@ -74,6 +74,9 @@ def main():
     # get the command line arguments
     cli_parser = get_cli_parser()
     args = vars(cli_parser.parse_args())
+    # convert 1 to 0 based indexing
+    args['i1_start'] = args['i1_start'] - 1
+
     # the sample sheet defines sample barcode relations and how the reads should be
     # demultiplexed
     barcode_sample_map, barcodes = parse_sample_sheet(**args)
