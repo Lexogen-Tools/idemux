@@ -282,8 +282,8 @@ When you run idemux the following will happen:
 
 This allows you to:
 1. Use other software, such as UMI_tools to deal with the 10nt UMI if desired
-2. To demuliplex lanes where QuantSeq-Pool has been pooled with other libraries and read 2
-   has been sequenced longer than the actual barcoe
+2. To demuliplex lanes where QuantSeq-Pool has been pooled with other libraries and read
+   2 has been sequenced longer than the actual barcode.
 
 If you sequenced i5 as a reverse complement, make sure to not fill in reverse complement
 barcodes into the sample sheet, but to use the ``--i5-rc`` parameter.
@@ -295,7 +295,7 @@ following error:
 
 * ``OSError: [Errno 24] Too many open files``
 
-This error occours because most OS have a limit on how many files can be opened and
+This error occurs because most OS have a limit on how many files can be opened and
 written to at the ame time. In order to temporarily increase the limit run:
 ::
     # multiply your sample number*2 (as data is paired end)
