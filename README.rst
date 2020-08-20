@@ -16,11 +16,10 @@ Idemux is a command line tool designed to demultiplex paired-end fastq files fro
 
 Idemux can demultiplex based on i7, i5 and i1 inline barcodes. While this tool
 can generally be used to demultiplex on any barcodes (as long as they are correctly supplied
-and in the fastq header), it shines when using it in combination with
+and in the fastq header), it best performs when used in combination with
 `Lexogen indices <https://www.lexogen.com/indexing/12nt-dual-indexing-kits/>`_, as it
 will correct common sequencing errors in the sequenced barcodes. This will allow you
-to retain more reads from your sequencing experiment, without causing and bleed or
-potential cross contamination.
+to retain more reads from your sequencing experiment, while minimizing cross contamination.
 
 
 Idemux use is permitted under the following `licence <LICENCE.txt>`_.
@@ -108,14 +107,13 @@ Example sample sheet (i7, i5 and i1 demuliplexing):
     sample_3,AAACTAACTGTC,CCCATCCATGTA,AAACTAACTGTC
 
 
-A sample sheet consists out of 4 columns and  always needs to start with the header
-illustrated above. 'sample_name' values will be used as output file names, while the
+A sample sheet consists of 4 columns and  always starts with the header illustrated
+above. 'Sample_name' values will be used as output file names, while the
 sequences specified in i7,i5 & i1 will be used for demultiplexing.
 
 Therefore, only specific, unique unambiguous combinations of sample names and barcodes are
-allowed. This means using duplicated or ambiguous combinations will result in a thrown
-error. However, idemux will do its best to tell you where the problem lies, once this
-happens.
+allowed. This means using duplicated or ambiguous combinations will result in an error.
+However, idemux will do its best to tell you where the problem lies, once this happens.
 
 |
 
