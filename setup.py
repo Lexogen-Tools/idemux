@@ -7,8 +7,8 @@ from setuptools import setup, find_packages
 with open('README.rst') as readme_file:
     readme = readme_file.read()
 
-with open('CHANGELOG.rst') as changelog_file:
-    history = changelog_file.read()
+with open('HISTORY.rst') as history_file:
+    history = history_file.read()
 
 requirements = [
     'importlib_resources; python_version < "3.7"',
@@ -27,8 +27,9 @@ test_requirements = ['pytest>=3',
                      "coverage"]
 
 setup(
-    author="Falko Hofmann, Michael Moldaschl",
-    author_email='falko.hofmann@lexogen.com, michael.moldaschl@lexogen.com',
+    author="Falko Hofmann, Michael Moldaschl, Andreas Tuerk",
+    author_email=('falko.hofmann@lexogen.com, michael.moldaschl@lexogen.com, '
+                  'andreas.tuerk@lexogen.com>'),
     python_requires='>=3.6',
     classifiers=[
         'Development Status :: 4 - Beta',
@@ -66,7 +67,9 @@ setup(
             'sphinx'
         ],
         'dev': [
-            'pytest'
+            'pytest',
+            'pytest-cov',
+            'coverage',
         ]
     }
 )
