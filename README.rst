@@ -131,7 +131,7 @@ However, idemux will do its best to tell you where the problem lies, once this h
 
 |
 
-See `below <Sample sheet examples_>`_. for more showcases of sample/barcode combinations that are *allowed* or
+See `below <Sample sheet examples_>`_ for more showcases of sample/barcode combinations that are *allowed* or
 *disallowed*.
 
 
@@ -166,7 +166,7 @@ Example commands:
     idemux --r1 read_1.fastq.gz --r2 read_2.fastq.gz --sample-sheet samples.csv --out demux --i1_start 1
 
     # demultiplexing assuming i5 is present as reverse complement in the fastq header
-    # if he i5 has been sequenced as reverse complement use this option and provide
+    # if the i5 has been sequenced as reverse complement use this option and provide
     # the NON reverse complement sequences in the sample sheet.
     idemux --r1 read_1.fastq.gz --r2 read_2.fastq.gz --sample-sheet samples.csv --out demux
 
