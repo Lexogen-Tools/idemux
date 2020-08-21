@@ -11,7 +11,7 @@ log = logging.getLogger(__name__)
 
 class FileHandler(ExitStack):
 
-    def __init__(self, barcode_file_map, output_folder, memory=2 ** 30):
+    def __init__(self, barcode_file_map, output_folder, memory=2 ** 32):
         self.barcode_file_map = barcode_file_map
         self.output_folder = pathlib.Path(output_folder)
         if not os.path.exists(output_folder):
