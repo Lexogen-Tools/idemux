@@ -44,7 +44,8 @@ setup(
     description=("A Lexogen tool for demultiplexing and  index error correcting fastq "
                  "files. Works with Lexogen i7, i5 and i1 barcodes."),
     install_requires=requirements,
-    long_description=readme, #+ '\n\n' + history,
+    long_description=readme + '\n\n' + history,
+    long_description_content_type="text/x-rst",
     include_package_data=True,
     keywords='idemux',
     name='idemux',
