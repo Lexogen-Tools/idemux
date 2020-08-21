@@ -8,7 +8,7 @@ idemux - inline barcode demultiplexing
 .. image:: https://travis-ci.org/lexogen-tools/idemux.svg?branch=master
    :target: https://travis-ci.org/lexogen-tools/idemux
 
-.. image:: https://coveralls.io/repos/github/Lexogen-Tools/idemux/badge.svg?branch=master
+.. image:: https://coveralls.io/repos/github/Lexogen-Tools/idemux/badge.svg?branch=master&service=github
    :target: https://coveralls.io/github/Lexogen-Tools/idemux?branch=master
 
 
