@@ -427,10 +427,11 @@ def peek_into_fastq_files(fq_gz_1, fq_gz_2, has_i7, has_i5, has_i1, i7_length,
         fq_gz_2 (str): File path of read mate2.
         has_i7 (bool): Did the sample_sheet specify that samples have an i7 index?
         has_i5 (bool): Did the sample_sheet specify that samples have an i5 index?
-
-    Raises:
-        ValueError: When the fastq header contains less barcodes than indicated by the
-            booleans.
+        has_i1 (bool): Did the sample_sheet specify that samples have an i1 index?
+        i7_length (int): i7 barcode length, indirectly specified via the sample sheet.
+        i5_length (int): i5 barcode length, indirectly specified via the sample sheet.
+        i1_start (int): Start position of the i1 inline barcode
+        i1_end (int): End position of the i1 inline barcode
     """
     log.info("Peeking into fastq files to check for barcode formatting errors")
     lines_to_check = 1000
@@ -451,6 +452,23 @@ def peek_into_fastq_files(fq_gz_1, fq_gz_2, has_i7, has_i5, has_i1, i7_length,
 
 def check_mate_pair(mate_pair, has_i7, has_i5, has_i1, i7_length, i5_length,
                     i1_start, i1_end):
+    """Reads the first 1000 lines of paired fastq.gz files and checks if everything is
+       okay with the fastq header format.
+
+       Args:
+           mate_pair (tuple): A tuple of mate_pairs as returned by fastq_lines_to_reads.
+           has_i7 (bool): Did the sample_sheet specify that samples have an i7 index?
+           has_i5 (bool): Did the sample_sheet specify that samples have an i5 index?
+           has_i1 (bool): Did the sample_sheet specify that samples have an i1 index?
+           i7_length (int): i7 barcode length, indirectly specified via the sample sheet.
+           i5_length (int): i5 barcode length, indirectly specified via the sample sheet.
+           i1_start (int): Start position of the i1 inline barcode
+           i1_end (int): End position of the i1 inline barcode
+
+    Except:
+        ValueError: Will initiate sys.exit(1)
+       """
+
     _, mate2 = mate_pair
     try:
         check_fastq_headers(mate_pair, has_i7, has_i5, i7_length, i5_length)
@@ -462,6 +480,18 @@ def check_mate_pair(mate_pair, has_i7, has_i5, has_i1, i7_length, i5_length,
 
 
 def check_mate2_length(mate2, i1_start, i1_end):
+    """Check if the mate2 sequence is long enough to contain the specified i1 barcodes.
+
+    Args:
+        mate2 (tuple): A fastq read (4 lines).
+        i1_start (int): Start position of the i1 inline barcode
+        i1_end (int): End position of the i1 inline barcode
+
+    Raises:
+        ValueError: When the fastq header contains less barcodes than indicated by the
+            booleans.
+    """
+
     seq_idx = 1
     seq = mate2[seq_idx]
     if len(seq[:-1]) < i1_end:
@@ -479,10 +509,13 @@ def check_fastq_headers(mate_pair, has_i7, has_i5, i7_length, i5_length):
         mate_pair (tuple): A tuple of mate_pairs as returned by fastq_lines_to_reads.
         has_i7 (bool): Did the sample_sheet specify that samples have an i7 index?
         has_i5 (bool): Did the sample_sheet specify that samples have an i5 index?
+        i7_length (int): i7 barcode length, indirectly specified via the sample sheet.
+        i5_length (int): i5 barcode length, indirectly specified via the sample sheet.
 
     Raises:
-        ValueError: When the fastq header contains less barcodes than indicated by the
-            booleans.
+        ValueError: 1) When the fastq header contains less barcodes than indicated by the
+            booleans. 2) When the barcodes have a different length than specified in the
+            sample sheet.
     """
     header_idx = 0
     m_1, m_2 = mate_pair
@@ -490,7 +523,8 @@ def check_fastq_headers(mate_pair, has_i7, has_i5, i7_length, i5_length):
     # get the barcodes from the fastq header
     bcs_mate1 = header_mate_1.strip().rpartition(":")[-1].split("+")
     bcs_mate2 = header_mate_2.strip().rpartition(":")[-1].split("+")
-
+    # when two mates have have different barcodes, the fastq files ist probably not sorted
+    # this will cause trouble and should not be allowed
     if bcs_mate1 != bcs_mate2:
         error_msg = (f"Mate1 and mate2 contain different barcode information. Please "
                      f"make sure the reads in your fastq files are paired.\n"
@@ -508,7 +542,8 @@ def check_fastq_headers(mate_pair, has_i7, has_i5, i7_length, i5_length):
     example_header_2 = ("@NB502007:379:HM7H2BGXF:1:11101:24585:1069 "
                         "1:N:0:TCAGGTAANNTT+NANGGNNCNNNN")
 
-    # check if the header conforms to what was specified in the sample sheet
+    # check if the header conforms to what was specified in the sample sheet and has
+    # at lest the number of barcodes specified in the sample sheet
     right_number_of_barcodes = [n <= expected_number for n in number_bc_present]
     if not all(right_number_of_barcodes):
         example_header = example_header_2 if expected_number == 2 else example_header_1
@@ -521,6 +556,9 @@ def check_fastq_headers(mate_pair, has_i7, has_i5, i7_length, i5_length):
                      f"Observed headers: {[header_mate_1, header_mate_2]}")
         raise ValueError(error_msg)
 
+    # check if barcodes specified in the sample sheet and observed in the fastq file
+    # are equally long.
+
     # when there are 2 barcodes in the fastq header the orientation is i7,i5
     if has_i7 and has_i5:
         if len(bcs_mate1[0]) != i7_length or len(bcs_mate1[1]) != i5_length:
@@ -529,6 +567,7 @@ def check_fastq_headers(mate_pair, has_i7, has_i5, i7_length, i5_length):
                              f"Observed length(i7,i5): {len(bcs_mate1[0])}"
                              f",{len(bcs_mate1[1])}\n "
                              f"Expected length(i7,i5): {i7_length},{i5_length}")
+    # when there is 1 barcodes in the fastq header we need to check which one it is
     if has_i7 and not has_i5:
         if len(bcs_mate1[0]) != i7_length:
             raise ValueError(f"i7 has a different length than specified in the "

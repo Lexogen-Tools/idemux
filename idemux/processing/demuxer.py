@@ -113,7 +113,6 @@ def demux_paired_end(barcode_sample_map, barcodes, read1, read2, i1_start, outpu
     Except:
         ValueError: Will initiate sys.exit(1)
     """
-    # TODO: add logging
     # load the maps that will be used for error correction. As the tool does not allow
     # different length we only need to load the used length
     i7, i5, i1 = barcodes
