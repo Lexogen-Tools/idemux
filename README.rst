@@ -189,6 +189,9 @@ When you run idemux, the following will happen:
     
     where TCAGGTAANNTT is the sequence of the i7 index and NANGGNNCNNNN is the sequence of the i5 index.
 
+* Reads with incorrect i7,i5 or i1 index sequences which can be corrected by idemux will be written to the
+  correct output file. However, the incorrect index sequence will not be replaced in the read header. This
+  allows for additional processing of the incorrect sequences.
 * Reads that cannot be demultiplexed will be written to undetermined_R{1/2}.fastq.gz.
 
 * When you demultiplex based on i1 inline barcodes, a successfully recognized barcode
