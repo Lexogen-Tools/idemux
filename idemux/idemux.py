@@ -6,6 +6,7 @@ from idemux import __version__
 from idemux.ioutils.parser import parse_sample_sheet
 from idemux.processing.demuxer import demux_paired_end
 
+# set logger format
 logging.basicConfig(format='%(asctime)s %(levelname)-8s %(message)s',
                     datefmt='%Y-%m-%d %H:%M:%S',
                     level=logging.INFO)
@@ -73,6 +74,7 @@ def get_cli_parser():
 def main():
     # get the command line arguments
     cli_parser = get_cli_parser()
+    # convert to dict so we can use it as **kwargs
     args = vars(cli_parser.parse_args())
     # convert 1 to 0 based indexing
     args['i1_start'] = args['i1_start'] - 1
