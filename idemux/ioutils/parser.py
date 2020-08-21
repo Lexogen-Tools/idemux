@@ -12,9 +12,9 @@ from itertools import zip_longest
 # importlib is > 3.7 Try to import it and if this does not work import the backport
 from idemux.ioutils.barcode import Barcode
 
-try:
+try: # pragma: no cover
     from importlib import resources
-except ImportError:
+except ImportError: # pragma: no cover
     import importlib_resources as resources
 
 log = logging.getLogger(__name__)
