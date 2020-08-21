@@ -38,7 +38,7 @@ Idemux use is permitted under the following `licence <LICENCE>`_.
 Features
 --------
 
-* FASTQ file demultiplexing based on i7, i5, or i1 barcodes.
+* FASTQ file demultiplexing based on i7, i5, and i1 barcodes.
 * Correction of barcode sequencing errors to maximize read yield (only works
   with `Lexogen 12 nt UDIs <https://www.lexogen.com/indexing/12nt-dual-indexing-kits/>`_
   that have been sequenced at least 8 nt).
@@ -124,7 +124,7 @@ However, idemux will do its best to tell you where the problem lies, if this hap
 3. i7 and/or i5 indices have to be used consistently within the csv file. i7 and/or i5 indices need to either be present for all samples or for none at all.
 4. In contrast to i7/i5 indices, i1 indices can be used for a subset of samples in the csv file.
 5. Absence of a barcode needs to be indicated by an empty field (no value between
-   comas ``,,``).
+   commas ``,,``).
 6. If your i5 has been sequenced as reverse complement, *do not* enter the reverse
    complement sequences in the sample sheet. Use the ``--i5-rc`` option!
 
@@ -182,24 +182,24 @@ When you run idemux, the following will happen:
 * It will check the FASTQ header for barcodes and it expects them in the following format:
 
     single index (i7 or i5): @NB502007:379:HM7H2BGXF:1:11101:24585:1069 1:N:0:TCAGGTAANNTT
+    
+    where TCAGGTAANNTT is the sequence of the i7 or i5 index
 
     dual index (i7 and i5): @NB502007:379:HM7H2BGXF:1:11101:24585:1069 1:N:0:TCAGGTAANNTT+NANGGNNCNNNN
+    
+    where TCAGGTAANNTT is the sequence of the i7 index and NANGGNNCNNNN is the sequence of the i5 index.
 
 * Reads that cannot be demultiplexed will be written to undetermined_R{1/2}.fastq.gz.
 
 * When you demultiplex based on i1 inline barcodes, a successfully recognized barcode
-  sequence will be cut out and removed from read 2. This is a design choice and will leave
-  you with the 10 nt UMI + the nucleotides that potentially follow the i1 barcode
-  (or don't).
+  sequence of 12 nt will be cut out and removed from read 2. This will leave
+  you with the 10 nt UMI + the nucleotides that potentially follow the i1 barcode.
 
 This allows you to:
 
 1. Use other software, such as UMI_tools, to deal with the 10nt UMI, if desired.
 2. To demuliplex lanes where QuantSeq-Pool has been pooled with other libraries and read
    2 has been sequenced longer than the actual barcode.
-
-If you sequenced i5 as a reverse complement, do not fill in reverse complement
-barcodes into the sample sheet, but use the ``--i5-rc`` parameter.
 
 Help
 ------
@@ -209,7 +209,7 @@ following error:
 * ``OSError: [Errno 24] Too many open files``
 
 This error occurs because most OS have a limit on how many files can be opened and
-written to at the same time. In order to temporarily increase the limit run:
+written to at the same time. In order to temporarily increase the limit on Linux run:
 ::
     # multiply your sample number*2 (as data is paired end)
     # then round to the next multiple of 1024
