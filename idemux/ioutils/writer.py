@@ -21,6 +21,6 @@ def write_summary(counter, output_dir):
         writer = csv.DictWriter(csvfile, delimiter='\t', fieldnames=fieldnames)
         writer.writeheader()
         for file_name, counts in counter.items():
-            writer.writerow({'sample': file_name, 'written_reads': counts})
+            writer.writerow({'sample_name': file_name, 'written_reads': counts})
     log.info("Run complete! Summary statistics saved to %s", output_file)
 

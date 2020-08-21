@@ -242,5 +242,3 @@ def test_demux_paired_end(demux_i7_i5_i1, tmp_path):
         for row in reader:
             n_reads = int(row.get("written_reads"))
             assert n_reads == expected_reads
-
-# TODO write test for mixed cases
