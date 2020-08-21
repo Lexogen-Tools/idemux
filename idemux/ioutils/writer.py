@@ -14,7 +14,7 @@ def write_summary(counter, output_dir):
     output_file = os.path.join(output_dir, 'demultipexing_stats.tsv')
 
     with open(output_file, 'w') as csvfile:
-        fieldnames = ['sample', 'written_reads']
+        fieldnames = ['sample_name', 'written_reads']
         writer = csv.DictWriter(csvfile, delimiter='\t', fieldnames=fieldnames)
         writer.writeheader()
         for file_name, counts in counter.items():
