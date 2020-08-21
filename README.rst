@@ -1,6 +1,6 @@
-======
+======================================
 idemux - inline barcode demultiplexing
-======
+======================================
 .. image:: https://badge.fury.io/py/idemux.svg
    :target: https://badge.fury.io/py/idemux
    :alt: Latest Version
@@ -27,8 +27,9 @@ Idemux use is permitted under the following `licence <LICENCE>`_.
 
 **General usage:**
 ::
-    idemux [-h] --r1 READ1 --r2 READ2 [--sample-sheet SAMPLE_SHEET] --out OUTPUT_DIR
-           [--i1-start I1_START] [--i5-rc] [-v]
+
+    idemux [-h] --r1 READ1 --r2 READ2 [--sample-sheet SAMPLE_SHEET]
+           --out OUTPUT_DIR [--i1-start I1_START] [--i5-rc] [-v]
 
 
 **Run idemux:**
@@ -215,9 +216,10 @@ following error:
 This error occurs because most OS have a limit on how many files can be opened and
 written to at the same time. In order to temporarily increase the limit on Linux run:
 ::
+
     # multiply your sample number*2 (as data is paired end)
     # then round to the next multiple of 1024
-    ulimit -n the_number_above
+    $ ulimit -n the_number_above
 
 If you are looking for a permanent solution, you can change your ulimit values
 `this way <https://access.redhat.com/solutions/61334>`_.
@@ -230,6 +232,7 @@ Sample sheet examples
 ---------------------
 *This is allowed:*
 ::
+
     # demultiplexing via full i7, i5, i1
     sample_name,i7,i5,i1
     sample_0,AAAACATGCGTT,CCCCACTGAGTT,AAAACATGCGTT
@@ -277,6 +280,7 @@ Sample sheet examples
 
 *This is not allowed:*
 ::
+
     # missing i1 column (or any other)
     sample_name,i7,i5,
     sample_0,AAAACATGCGTT,CCCCACTGAGTT
