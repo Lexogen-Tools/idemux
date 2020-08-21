@@ -1,3 +1,6 @@
+
+"""Summary statistics writer"""
+
 import csv
 import logging
 import os

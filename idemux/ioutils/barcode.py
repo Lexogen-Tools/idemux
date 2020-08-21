@@ -1,3 +1,6 @@
+
+"""Barcode data class - stores data during processing"""
+
 from collections import defaultdict
 from dataclasses import dataclass, field
 import logging

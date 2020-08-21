@@ -1,3 +1,6 @@
+
+"""Parser module - handles all the reading"""
+
 import csv
 import gzip
 import logging

@@ -1,3 +1,6 @@
+
+"""File handler module - handles writing of fastq.gz files"""
+
 import gzip
 import logging
 import os

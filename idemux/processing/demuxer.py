@@ -1,3 +1,6 @@
+
+"""Module that does the demuliplexing and string processing"""
+
 import logging
 from collections import Counter
 
