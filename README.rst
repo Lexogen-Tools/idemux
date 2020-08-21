@@ -8,8 +8,9 @@ idemux - inline barcode demultiplexing
 .. image:: https://travis-ci.org/lexogen-tools/idemux.svg?branch=master
    :target: https://travis-ci.org/lexogen-tools/idemux
 
-.. image:: https://coveralls.io/repos/github/lexogen-tools/idemux/badge.svg?branch=master
-   :target: https://coveralls.io/github/lexogen-tools/idemux?branch=master
+.. image:: https://coveralls.io/repos/github/Lexogen-Tools/idemux/badge.svg?branch=master
+   :target: https://coveralls.io/github/Lexogen-Tools/idemux?branch=master
+
 
 Idemux is a command line tool designed to demultiplex paired-end FASTQ files from
 `QuantSeq-Pool <https://www.lexogen.com/quantseq-pool-sample-barcoded-3mrna-sequencing/>`_.
