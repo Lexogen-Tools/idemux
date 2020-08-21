@@ -29,7 +29,7 @@ test_requirements = ['pytest>=3',
 setup(
     author="Falko Hofmann, Michael Moldaschl, Andreas Tuerk",
     author_email=('falko.hofmann@lexogen.com, michael.moldaschl@lexogen.com, '
-                  'andreas.tuerk@lexogen.com>'),
+                  'andreas.tuerk@lexogen.com'),
     python_requires='>=3.6',
     classifiers=[
         'Development Status :: 4 - Beta',
