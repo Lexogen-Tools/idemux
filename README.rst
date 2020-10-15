@@ -58,7 +58,7 @@ To get stated with demultiplexing you need to:
 1. Installation
 ===============
 
-Idemux is available as conda and pypi package. 
+Idemux is available as  `conda <https://conda.io/>`_ and  `PyPI <https://pypi.org/>`_ package. 
 
 To install via bioconda: 
 
