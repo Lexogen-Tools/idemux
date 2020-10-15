@@ -58,11 +58,17 @@ To get stated with demultiplexing you need to:
 1. Installation
 ===============
 
-Idemux is available on pypi. To install idemux via pip:
+Idemux is available on bioconda and pypi. 
+
+To install idemux via bioconda: 
+
+``$conda install -c bioconda idemux``
+
+To install idemux via pip:
 
 ``$ pip install idemux``
 
-If you want to install idemux into a `virtual env <https://virtualenv.pypa.io/en/latest/>`_
+If you dont use conda and want to install idemux into a `virtual env <https://virtualenv.pypa.io/en/latest/>`_
 (always a good idea to avoid dependency conflicts), do the following:
 ::
 
@@ -83,8 +89,6 @@ Alternatively, you can clone this repository and install from there:
     $ git clone https://github.com/Lexogen-Tools/idemux.git
     $ source idemux/bin/activate
     $ python setup.py install
-
-Additionally, Idemux will soon be available via bioconda!
 
 
 2. Preparing the sample sheet
