@@ -61,12 +61,11 @@ To get stated with demultiplexing you need to:
 Idemux is available on bioconda and pypi. 
 
 To install idemux via bioconda: 
-
-``$conda install -c bioconda idemux``
+``$ conda install -c bioconda idemux``
 
 To install idemux via pip:
-
 ``$ pip install idemux``
+
 
 If you dont use conda and want to install idemux into a `virtual env <https://virtualenv.pypa.io/en/latest/>`_
 (always a good idea to avoid dependency conflicts), do the following:
