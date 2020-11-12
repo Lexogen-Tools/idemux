@@ -3,6 +3,12 @@ History
 =======
 
 
+0.1.4 (2020-11-12)
+------------------
+
+* Bug fix: Demultiplexing with i1 barcodes only raised an incorrect exception (when no barcodes were present in the fastq header)
+
+
 0.1.3 (2020-08-21)
 ------------------
 

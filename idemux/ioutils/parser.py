@@ -523,9 +523,17 @@ def check_fastq_headers(mate_pair, has_i7, has_i5, i7_length, i5_length):
     header_idx = 0
     m_1, m_2 = mate_pair
     header_mate_1, header_mate_2 = m_1[header_idx], m_2[header_idx]
-    # get the barcodes from the fastq header
-    bcs_mate1 = header_mate_1.strip().rpartition(":")[-1].split("+")
-    bcs_mate2 = header_mate_2.strip().rpartition(":")[-1].split("+")
+    # get the barcodes from the fastq header if present.
+    # first get the last element. This is either a barcode, or if no barcodes are present
+    # a digit describing the sample number
+    # see https://support.basespace.illumina.com/articles/descriptive/fastq-files/
+    bcs_mate1 = header_mate_1.strip().rpartition(":")[-1]
+    # when the last element is only numeric it is not a barcode. if it is not numeric
+    # it can be either one or two barcodes. these are normally seperated by a  +
+    bcs_mate1 = None if bcs_mate1.isnumeric() else bcs_mate1.split("+")
+    bcs_mate2 = header_mate_2.strip().rpartition(":")[-1]
+    bcs_mate2 = None if bcs_mate2.isnumeric() else bcs_mate2.split("+")
+
     # when two mates have have different barcodes, the fastq files ist probably not sorted
     # this will cause trouble and should not be allowed
     if bcs_mate1 != bcs_mate2:
@@ -535,8 +543,9 @@ def check_fastq_headers(mate_pair, has_i7, has_i5, i7_length, i5_length):
                      f"Mate2 header: {header_mate_2}")
         raise ValueError(error_msg)
 
-    number_bc_m1 = len(bcs_mate1)
-    number_bc_m2 = len(bcs_mate2)
+    # when there are no barcodes present, set the number to 0
+    number_bc_m1 = 0 if bcs_mate1 is None else len(bcs_mate1)
+    number_bc_m2 = 0 if bcs_mate2 is None else len(bcs_mate2)
 
     number_bc_present = [number_bc_m1, number_bc_m2]
     expected_number = sum([has_i7, has_i5])
