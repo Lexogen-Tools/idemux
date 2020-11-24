@@ -146,8 +146,10 @@ See `below <Sample sheet examples_>`_ for more showcases of sample/barcode combi
 The read input files for idemux are non-demultiplexed read files which you can get by using demultiplexing software to extract reads from a sequencing run without demultiplexing by sample.  
 You can use any demultiplexing software available to you, but the resulting read file(s) should contain all reads of the sequencing run you want to demultiplex with idemux.
 Further, the reads should contain the read-out of the i7 + i5 barcode sequences in the read ID.
+
 The following part of this section outlines how to use Illumina's bcl2fastq software to obtain the reads.
 ::
+
    # Demultiplexing with bcl2fastq:
    $ bcl2fastq -R /path/to/sequencing/run -o /path/to/output -l WARNING --no-lane-splitting --sample-sheet Illumina_EMPTY_SampleSheet.csv --barcode-mismatches 0 --mask-short-adapter-reads 10
 
@@ -156,6 +158,7 @@ The content of the file *Illumina_EMPTY_SampleSheet.csv* has to match Illumina's
 
 The following text is an example for the content of a SampleSheet for a Illumina Nextseq run:
 ::
+
    [Header],,,,,,,
    IEMFileVersion,4,,,,,,
    Date,30.05.2017,,,,,,
@@ -179,6 +182,7 @@ As you can see, no settings are specified and only one 'sample' was defined with
 This specification is necessary to command bcl2fastq to write the i7+i5 sequence information in each read in the *Undetermined_S0_R1_001.fastq.gz* (*Undetermined_S0_R2_001.fastq.gz*) file(s)
 The resulting reads in *Undetermined_S0_R1_001.fastq.gz* (*Undetermined_S0_R2_001.fastq.gz*) should follow this formatting style:
 ::
+
    @NB502007:379:HM7H2BGXF:1:11101:19231:1159 1:N:0:TTAGGACGCAAA+GGGTCTGCCGAA
    GCTCATCCATCTTTTTGAAAACTCTTCATACTCGTTAGATCGGAAGAG
    +
