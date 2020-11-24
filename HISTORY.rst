@@ -7,6 +7,7 @@ History
 ------------------
 
 * Bug fix: Idemux now prints version properly
+* Bug fix: README.rst contained some formatting errors
 * Bug fix: Broken licence link on pypi now works
 
 
