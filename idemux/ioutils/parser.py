@@ -556,7 +556,7 @@ def check_fastq_headers(mate_pair, has_i7, has_i5, i7_length, i5_length):
 
     # check if the header conforms to what was specified in the sample sheet and has
     # at lest the number of barcodes specified in the sample sheet
-    right_number_of_barcodes = [n <= expected_number for n in number_bc_present]
+    right_number_of_barcodes = [expected_number <= n for n in number_bc_present]
     if not all(right_number_of_barcodes):
         example_header = example_header_2 if expected_number == 2 else example_header_1
         error_msg = (f"The fastq file does not contain sufficient barcode information "
