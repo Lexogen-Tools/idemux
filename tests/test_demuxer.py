@@ -245,3 +245,60 @@ def test_demux_paired_end(demux_i7_i5_i1, tmp_path):
         for row in reader:
             n_reads = int(row.get("written_reads"))
             assert n_reads == expected_reads
+
+
+@pytest.fixture
+def get_data(request):
+    params = request.param
+    sample_sheet = params[0]
+    fq_1 = params[1]
+    fq_2 = params[2]
+    res = pathlib.Path(path.dirname(__file__)) / "resources" / "end_to_end"
+    read_1 = res / fq_1
+    read_2 = res / fq_2
+    sdf = res / sample_sheet
+    return sdf, read_1, read_2
+
+
+# These are some end to end tests that check if we get the expected output from
+# our ground truth data set. These should all pass.
+@pytest.mark.parametrize("get_data", [
+    # Full indexing combinations
+    ("i7_i5_i1_sample_sheet.csv",
+     "i7_i5_i1_read_1.fastq.gz",
+     "i7_i5_i1_read_2.fastq.gz"),
+    # i1 only indexing with all barcodes present
+    ("i1_sample_sheet.csv",
+     "i7_i5_i1_read_1.fastq.gz",
+     "i7_i5_i1_read_2.fastq.gz"),
+    # i7,i1 with all present
+    ("i7_i1_sample_sheet.csv",
+     "i7_i5_i1_read_1.fastq.gz",
+     "i7_i5_i1_read_2.fastq.gz"),
+    # i5,i1 with all present
+    ("i5_i1_sample_sheet.csv",
+     "i7_i5_i1_read_1.fastq.gz",
+     "i7_i5_i1_read_2.fastq.gz"),
+    # i7,i1 with i7,i1 present
+    ("i7_i1_sample_sheet.csv",
+     "i7_i1_read_1.fastq.gz",
+     "i7_i1_read_2.fastq.gz"),
+    # i5,i1 with i5,i1 present
+    ("i5_i1_sample_sheet.csv",
+     "i5_i1_read_1.fastq.gz",
+     "i5_i1_read_2.fastq.gz"),
+], indirect=True)
+def test_end_to_end(get_data, tmp_path):
+    expected_reads = 100
+
+    csv_file, read1, read2 = get_data
+    barcode_sample_map, barcodes = parse_sample_sheet(csv_file, i5_rc=False)
+    demux_paired_end(barcode_sample_map, barcodes, read1, read2, I1_START, tmp_path)
+
+    stats_file = pathlib.Path(tmp_path / "demultipexing_stats.tsv")
+    with open(stats_file, 'r') as stats:
+        csv.register_dialect('strip', skipinitialspace=True)
+        reader = csv.DictReader(stats, delimiter='\t', dialect='strip')
+        for row in reader:
+            n_reads = int(row.get("written_reads"))
+            assert n_reads == expected_reads
