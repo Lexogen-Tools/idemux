@@ -3,6 +3,14 @@ History
 =======
 
 
+0.1.6 (2021-07-09)
+------------------
+
+* Bug fix: Idemux threw an error when both **i7** and **i5** indices were present in the fastq header, but only **i1** demultiplexing should be performed.
+* Bug fix: Idemux was not demultiplexing files correctly when both **i7** and **i5** barcodes were present in the fastq header, but only **i5** and **i1** demultiplexing should be performed.
+* Enhancement: Added more tests to catch bugs like listed above.
+
+
 0.1.5 (2020-11-24)
 ------------------
 
