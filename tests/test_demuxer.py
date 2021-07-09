@@ -38,9 +38,9 @@ def demux_i7_i1():
 @pytest.fixture
 def demux_i5_i1():
     res = pathlib.Path(path.dirname(__file__)) / "resources" / "end_to_end"
-    read_1 = res / "i7_i1_read_1.fastq.gz"
-    read_2 = res / "i7_i1_read_2.fastq.gz"
-    csv = res / "i7_i1_sample_sheet.csv"
+    read_1 = res / "i5_i1_read_1.fastq.gz"
+    read_2 = res / "i5_i1_read_2.fastq.gz"
+    csv = res / "i5_i1_sample_sheet.csv"
     return read_1, read_2, csv
 
 
