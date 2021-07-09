@@ -7,8 +7,11 @@ from os import path
 from idemux.ioutils.parser import parse_sample_sheet, get_pe_fastq
 from idemux.processing.demuxer import process_mate_pair, demux_paired_end
 
+# i1 index start position
 I1_START = 10
-
+# the test data contains the indices not only in the header but also on the fq sequences
+# we define and uses this slices to extract the information from the fq sequences and
+# as a ground truth dataset.
 I7_POS = slice(0, 12)
 I5_POS = slice(12, 24)
 I1_POS = slice(24, 36)

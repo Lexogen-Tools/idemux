@@ -36,22 +36,28 @@ Fq_data = namedtuple('Fq_data', ['condition',
                                  'has_i7', 'has_i5', 'has_i1',
                                  'i7_length', 'i5_length', 'i1_start', 'i1_end'])
 FQ_TO_PASS = [
+    # Here we test a few default usecases that need idemux need to be able to handle
+    # i7,i5,i1 specified and present
     Fq_data("i7(12)nt, i5(12)nt, i1(12)nt",
             FQ_RES / "i7_i5_i1_read_1.fastq.gz", FQ_RES / "i7_i5_i1_read_2.fastq.gz",
             True, True, True,
             INDEX_LENGTH, INDEX_LENGTH, I1_START, I1_START + INDEX_LENGTH),
+    # i7,i5 not specified but present
     Fq_data("i7(0)nt, i5(0)nt, i1(12)nt",
             FQ_RES / "i7_i5_i1_read_1.fastq.gz", FQ_RES / "i7_i5_i1_read_2.fastq.gz",
             False, False, True,
             None, None, I1_START, I1_START + INDEX_LENGTH),
+    # i7 not specified but present
     Fq_data("i7(0)nt, i5(12)nt, i1(12)nt",
             FQ_RES / "i7_i5_i1_read_1.fastq.gz", FQ_RES / "i7_i5_i1_read_2.fastq.gz",
             False, True, True,
             None, INDEX_LENGTH, I1_START, I1_START + INDEX_LENGTH),
+    # i5 not specified but present
     Fq_data("i7(12)nt, i5(0)nt, i1(12)nt",
             FQ_RES / "i7_i5_i1_read_1.fastq.gz", FQ_RES / "i7_i5_i1_read_2.fastq.gz",
             True, False, True,
             INDEX_LENGTH, None, I1_START, I1_START + INDEX_LENGTH),
+    # short i7 but full i5, i1 present
     Fq_data("i7(10)nt, i5(12nt), i1(12)nt",
             FQ_RES / "i7-2_i5_i1_read_1.fastq.gz", FQ_RES / "i7-2_i5_i1_read_2.fastq.gz",
             True, True, True,
@@ -59,22 +65,32 @@ FQ_TO_PASS = [
 ]
 
 FQ_TO_FAIL = [
+    # Here we mostly check of length of the by the user specified barcodes have the same
+    # length as in the fastq file. We need to to this and otherwise throw an error
+    # as we otherwise cant error correct due to ambiguity. All of the conditions below
+    # need to fail.
+    # i7 in the fastq file is longer than specified.
     Fq_data("too long i7",
             FQ_RES / "i7+2_i5_i1_read_1.fastq.gz", FQ_RES / "i7_i5_i1_read_2.fastq.gz",
             True, True, True,
             INDEX_LENGTH, INDEX_LENGTH, I1_START, I1_START + INDEX_LENGTH),
+    # i5 in the fastq file is longer than specified
     Fq_data("too long i5",
             FQ_RES / "i7_i5+2_i1_read_1.fastq.gz", FQ_RES / "i7_i5+2_i1_read_2.fastq.gz",
             True, True, True,
             INDEX_LENGTH, INDEX_LENGTH, I1_START, I1_START + INDEX_LENGTH),
+    # i1 index the fastq file shorter than specified. Needs to raise an error
     Fq_data("too short i1 sequence",
             FQ_RES / "i7_i5_noi1_read_1.fastq.gz", FQ_RES / "i7_i5_noi1_read_2.fastq.gz",
             True, True, True,
             INDEX_LENGTH, INDEX_LENGTH, I1_START, I1_START + INDEX_LENGTH),
+    # mate1 and mate 2 have different barcode length. Most likely the user provided
+    # files from to different runs. Needs to raise an error
     Fq_data("different barcode headers",
             FQ_RES / "i7+2_i5_i1_read_1.fastq.gz", FQ_RES / "i7_i5_i1_read_2.fastq.gz",
             True, True, True,
             INDEX_LENGTH, INDEX_LENGTH, I1_START, I1_START + INDEX_LENGTH),
+    # i7 barcode in the fq file is shorter than specified. Needs to raise error.
     Fq_data("too short i7",
             FQ_RES / "i7-2_i5_i1_read_1.fastq.gz", FQ_RES / "i7-2_i5_i1_read_2.fastq.gz",
             True, True, True,
