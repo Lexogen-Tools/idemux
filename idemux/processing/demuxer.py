@@ -41,7 +41,7 @@ def process_mate_pair(mate_pair, i7, i5, i1, i1_start, i1_end):
     i7_bc = i5_bc = None
 
     # when there are 2 barcodes in the fastq header the orientation is i7,i5
-    if i7.not_empty and i5.not_empty:
+    if len(barcodes) == 2:
         i7_bc, i5_bc = barcodes
     # when there is only 1 barcode in the fastq header we need to figure out if i7 or i1
     elif i7.not_empty or i5.not_empty:
