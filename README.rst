@@ -5,6 +5,9 @@ idemux - inline barcode demultiplexing
    :target: https://badge.fury.io/py/idemux
    :alt: Latest Version
 
+.. image:: https://anaconda.org/bioconda/idemux/badges/version.svg
+   :target: https://anaconda.org/bioconda/idemux
+   
 .. image:: https://travis-ci.com/Lexogen-Tools/idemux.svg?branch=master
    :target: https://travis-ci.com/Lexogen-Tools/idemux
 
