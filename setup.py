@@ -39,7 +39,8 @@ setup(
         'Programming Language :: Python :: 3',
         'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: 3.7',
-        'Programming Language :: Python :: 3.8',
+        'Programming Language :: Python :: 3.8', 
+        'Programming Language :: Python :: 3.9',
     ],
     description=("A Lexogen tool for demultiplexing and  index error correcting fastq "
                  "files. Works with Lexogen i7, i5 and i1 barcodes."),
