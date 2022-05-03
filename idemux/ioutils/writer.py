@@ -9,10 +9,10 @@ log = logging.getLogger(__name__)
 
 
 def write_summary(counter, output_dir):
-    """Writes a counter dictionary as tsv file with the name error_correction_stats.tsv.
-    Args:
-        counter(dict): A dictionary barcodes <sample name, #corrected reads>.
-        output_dir (string): The path the file should be written to.
+    """Writes a counter dictionary as tsv file with the name demultipexing_stats.tsv.
+       Args:
+           counter(dict): A dictionary barcodes <sample name, #corrected reads>.
+           output_dir (string): The path the file should be written to.
     """
     output_file = os.path.join(output_dir, 'demultipexing_stats.tsv')
 
