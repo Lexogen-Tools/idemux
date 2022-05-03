@@ -22,7 +22,9 @@ def write_summary(counter, output_dir):
         writer.writeheader()
         for file_name, counts in counter.items():
             writer.writerow({'sample_name': file_name, 'written_reads': counts})
-    log.info("Run complete! Summary statistics saved to %s", output_file)
+    log.info("Summary statistics saved to %s", output_file)
+
+
 def write_undetermined_barcodes(counter, output_dir):
     """Writes a counter dictionary as tsv file with the name
     barcodes_undetermined_reads.tsv.

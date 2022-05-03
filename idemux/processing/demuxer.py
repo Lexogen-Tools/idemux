@@ -153,3 +153,4 @@ def demux_paired_end(barcode_sample_map, barcodes, read1, read2, i1_start, outpu
     # write out the summary statistics
     write_summary(read_counter, output_dir)
     write_undetermined_barcodes(undetermined_barcodes, output_dir)
+    log.info("Run complete!")
