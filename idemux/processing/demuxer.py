@@ -8,7 +8,7 @@ from tqdm import tqdm
 
 from idemux.ioutils.file_handler import FileHandler
 from idemux.ioutils.parser import get_pe_fastq, peek_into_fastq_files
-from idemux.ioutils.writer import write_summary
+from idemux.ioutils.writer import write_summary,write_undetermined_barcodes
 
 log = logging.getLogger(__name__)
 
@@ -127,6 +127,7 @@ def demux_paired_end(barcode_sample_map, barcodes, read1, read2, i1_start, outpu
                           i7.length, i5.length,
                           i1_start, i1_end)
     read_counter = Counter()
+    undetermined_barcodes = Counter()
     log.info("Starting demultiplexing")
     # first we need to open the output files the reads should get sorted into
     with FileHandler(barcode_sample_map, output_dir) as file_handler:
@@ -146,4 +147,9 @@ def demux_paired_end(barcode_sample_map, barcodes, read1, read2, i1_start, outpu
                 fq_out1.write(processed_mates[0].encode())
                 fq_out2.write(processed_mates[1].encode())
                 read_counter[barcode_sample_map.get(barcodes, "undetermined")] += 1
+                # Here we track the barcode combinations of the undetermined reads
+                if not barcodes in barcode_sample_map:
+                    undetermined_barcodes[barcodes] += 1
+    # write out the summary statistics
     write_summary(read_counter, output_dir)
+    write_undetermined_barcodes(undetermined_barcodes, output_dir)
