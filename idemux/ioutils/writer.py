@@ -33,7 +33,9 @@ def write_undetermined_barcodes(counter, output_dir):
         output_dir (string): The path the file should be written to.
     """
     output_file = os.path.join(output_dir, 'barcodes_undetermined_reads.tsv')
-
+    log.info("Sorting summary statistics for undetermined reads... ")
+    counter = counter.most_common()
+    log.info("Sorting summary statistics for undetermined reads... - Done")
     with open(output_file, 'w') as csvfile:
         fieldnames = ['i7', 'i5', 'i1', 'read_counts']
         writer = csv.DictWriter(csvfile, delimiter='\t', fieldnames=fieldnames)
